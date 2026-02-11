@@ -32,7 +32,11 @@ class Idea(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     submitted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    votes = models.IntegerField(default=0)
+    voters = models.ManyToManyField(User, related_name='voted_ideas', blank=True)
+    
+    # NEW: The checkbox to hide the name
+    is_anonymous = models.BooleanField(default=False)
+    
     is_approved = models.BooleanField(default=False)
 
     def __str__(self):
