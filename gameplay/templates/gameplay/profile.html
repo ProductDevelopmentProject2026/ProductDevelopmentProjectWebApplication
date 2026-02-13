@@ -1,0 +1,20 @@
+{% extends 'gameplay/base.html' %}
+{% block content %}
+    <h1>👤 My Profile: {{ request.user.username }}</h1>
+    <div class="card">
+        <h3>Details</h3>
+        <p><strong>Department:</strong> {{ profile.department.name|default:"Not Assigned" }}</p>
+        <p><strong>Email:</strong> {{ request.user.email }}</p>
+    </div>
+
+    <div class="card">
+        <h3>My Submitted Ideas</h3>
+        <ul>
+            {% for idea in my_ideas %}
+                <li>{{ idea.title }} ({% if idea.is_anonymous %}👻 Anonymous{% else %}Public{% endif %})</li>
+            {% empty %}
+                <li>You haven't submitted any ideas yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

@@ -3,7 +3,7 @@
 {% block content %}
     
     <div class="card" style="border-left: 5px solid #2ecc71;">
-        <h2>📝 Submit an Idea</h2>
+        <h2>Submit an Idea</h2>
         <form method="post">
             {% csrf_token %}
             
@@ -29,7 +29,7 @@
     </div>
 
     <div class="card">
-        <h2>💡 Recent Ideas (Kaizen)</h2>
+        <h2>Recent Ideas (Kaizen)</h2>
         <ul style="padding-left: 0; list-style: none;">
             {% for idea in ideas %}
                 <li style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">

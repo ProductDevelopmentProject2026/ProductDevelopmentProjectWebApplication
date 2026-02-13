@@ -1,0 +1,11 @@
+{% extends 'gameplay/base.html' %}
+{% block content %}
+<div class="card" style="max-width: 400px; margin: auto;">
+    <h2>Employee Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="background: #2c3e50; color: white; border: none; padding: 10px 20px; width: 100%; border-radius: 5px;">Login</button>
+    </form>
+</div>
+{% endblock %}

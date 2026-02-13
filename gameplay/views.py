@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count
-from .models import Department, Idea
+from .models import Department, Idea, Profile
 from .forms import IdeaForm
+from django.contrib.auth.decorators import login_required
 
 # 1. Home Page (Welcome)
 def dashboard(request):
@@ -38,3 +39,15 @@ def vote_idea(request, idea_id):
         else:
             idea.voters.add(request.user)
     return redirect('ideas_page') # Go back to ideas page
+
+@login_required
+def profile_page(request):
+    # This fetches the profile for the person who is logged in
+    user_profile = get_object_or_404(Profile, user=request.user)
+    # Fetch ideas submitted by this specific user
+    my_ideas = Idea.objects.filter(submitted_by=request.user)
+    
+    return render(request, 'gameplay/profile.html', {
+        'profile': user_profile,
+        'my_ideas': my_ideas
+    })
