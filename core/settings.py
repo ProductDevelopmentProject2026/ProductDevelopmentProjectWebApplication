@@ -124,3 +124,6 @@ LOGIN_REDIRECT_URL = 'dashboard'
 
 # Where to go after logging out
 LOGOUT_REDIRECT_URL = 'login'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

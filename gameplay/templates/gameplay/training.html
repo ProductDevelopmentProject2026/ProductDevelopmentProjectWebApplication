@@ -4,7 +4,7 @@
 
     <div class="card" style="border-left: 5px solid #9b59b6;">
         <h2>Schedule a Training</h2>
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div style="margin-bottom: 10px;">
@@ -28,7 +28,12 @@
                 {{ form.description }}
             </div>
 
-            <button type="submit" style="background: #9b59b6; color: white; border: none; padding: 10px 20px; font-size: 1em; border-radius: 5px;">
+            <div style="margin-bottom: 10px;">
+                <label><strong>Cover Photo (Optional):</strong></label><br>
+                {{ form.image }}
+            </div>
+
+            <button type="submit" style="background: #9b59b6; color: white; border: none; padding: 10px 20px; font-size: 1em; border-radius: 5px; cursor: pointer;">
                 Add Training
             </button>
         </form>
@@ -40,8 +45,13 @@
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: start;">
             
-            <div>
+            <div style="flex-grow: 1; padding-right: 20px;">
                 <h2 style="margin-top: 0; margin-bottom: 5px;">{{ training.title }}</h2>
+                
+                {% if training.image %}
+                    <img src="{{ training.image.url }}" alt="Training Cover" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 10px; margin-bottom: 10px; object-fit: cover; display: block;">
+                {% endif %}
+
                 <small style="color: #555;">
                     <strong>{{ training.location }}</strong> | 
                     {{ training.date_time|date:"D, d M @ H:i" }} | 
@@ -59,7 +69,7 @@
                 </div>
             </div>
 
-            <div style="text-align: center; min-width: 100px;">
+            <div style="text-align: center; min-width: 120px;">
                 <span style="font-size: 2em; font-weight: bold; color: #2c3e50;">
                     {{ training.attendees.count }}
                 </span>
@@ -69,11 +79,11 @@
 
                 <a href="{% url 'register_training' training.id %}" style="text-decoration: none;">
                     {% if request.user in training.attendees.all %}
-                        <button style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px;">
+                        <button style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">
                             Cancel
                         </button>
                     {% else %}
-                        <button style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px;">
+                        <button style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">
                             Register
                         </button>
                     {% endif %}
@@ -82,17 +92,16 @@
                 <hr style="margin: 10px 0;">
 
                 {% if request.user == training.organizer %}
-                    <a href="{% url 'add_question' training.id %}">
-                        <button style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8em;">
+                    <a href="{% url 'add_question' training.id %}" style="display: block; margin-bottom: 10px;">
+                        <button style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8em; cursor: pointer; width: 100%;">
                             ✏️ Manage Quiz
                         </button>
                     </a>
-                    {% endif %}
+                {% endif %}
 
                 {% if request.user in training.attendees.all and training.questions.exists %}
-                    <br><br>
-                    <a href="{% url 'take_quiz' training.id %}">
-                        <button style="background: #8e44ad; color: white; border: none; padding: 8px 15px; border-radius: 4px;">
+                    <a href="{% url 'take_quiz' training.id %}" style="display: block;">
+                        <button style="background: #8e44ad; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">
                             📝 Take Quiz
                         </button>
                     </a>

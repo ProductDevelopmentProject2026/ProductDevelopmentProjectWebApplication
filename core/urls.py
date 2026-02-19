@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.conf import settings              
+from django.conf.urls.static import static
 from gameplay.views import (
     dashboard, departments_page, ideas_page, vote_idea, 
     profile_page, training_page, register_training, add_question, take_quiz, register_page
@@ -20,3 +22,6 @@ urlpatterns = [
     path('training/take-quiz/<int:training_id>/', take_quiz, name='take_quiz'),
     path('register/', register_page, name='register'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

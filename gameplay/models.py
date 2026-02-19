@@ -49,16 +49,14 @@ class Training(models.Model):
     date_time = models.DateTimeField()
     location = models.CharField(max_length=100)
     
+    image = models.ImageField(upload_to='training_images/', blank=True, null=True)
+    
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_trainings')
-    
     attendees = models.ManyToManyField(User, related_name='attended_trainings', blank=True)
-    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
-
-# ... keep existing models ...
 
 class Question(models.Model):
     training = models.ForeignKey(Training, on_delete=models.CASCADE, related_name='questions')

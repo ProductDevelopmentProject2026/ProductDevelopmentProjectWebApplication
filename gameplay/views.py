@@ -61,7 +61,7 @@ def profile_page(request):
 def training_page(request):
     # Handle "Add Training" form
     if request.method == 'POST':
-        form = TrainingForm(request.POST)
+        form = TrainingForm(request.POST, request.FILES)
         if form.is_valid():
             new_training = form.save(commit=False)
             new_training.organizer = request.user
