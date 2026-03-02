@@ -22,6 +22,6 @@ EXPOSE 8080
 
 RUN chmod +x /app/entrypoint.sh
 
-ENTRYPOINT [ "entrypoint.sh" ]
+ENTRYPOINT [ "/app/entrypoint.sh" ]
 
 #CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8080"]
