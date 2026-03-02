@@ -106,3 +106,7 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.training.title} - {self.order}. {self.title}"
+
+class Nikita(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField(max_length=100)
