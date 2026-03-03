@@ -6,12 +6,25 @@
     
     <form method="post">
         {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div style="background-color: #fee2e2; color: #dc2626; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
         
         {% for field in form %}
             <div style="margin-bottom: 15px;">
                 <label style="font-weight: bold;">{{ field.label }}</label>
                 <br>
                 {{ field }}
+                
+                {% if field.errors %}
+                    <div style="color: #dc2626; font-weight: bold; font-size: 0.9em; margin-top: 5px;">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+                
                 {% if field.help_text %}
                     <small style="color: #888; display: block; margin-top: 5px;">{{ field.help_text }}</small>
                 {% endif %}
