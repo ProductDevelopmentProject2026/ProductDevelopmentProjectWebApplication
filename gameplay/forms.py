@@ -1,5 +1,9 @@
 from django import forms
 from .models import Idea, Training, Question, Lesson
+from django.contrib.auth.models import User
+from .models import Department
+from django.contrib.auth.forms import UserCreationForm
+
 
 class IdeaForm(forms.ModelForm):
     class Meta:
@@ -49,3 +53,19 @@ class LessonForm(forms.ModelForm):
             'video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/...'}),
             'attached_file': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+class UserRegisterForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True, 
+        help_text="Required. Please enter a valid email address."
+    )
+    
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.all(),
+        required=True,
+        help_text="Select the department you belong to."
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = UserCreationForm.Meta.fields + ('email',)

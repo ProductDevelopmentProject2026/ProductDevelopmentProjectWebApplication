@@ -17,6 +17,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
     total_score = models.IntegerField(default=0)
+    bonus_euros = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.user.username} ({self.department})"

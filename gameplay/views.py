@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum
 from .models import Department, Idea, Profile, Training, Question, QuizResult, Lesson
-from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm         
+from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm        
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 import re  
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 # 1. Home Page (Welcome)
 @login_required
@@ -107,13 +107,16 @@ def profile_page(request):
 
 # 5. Training Page (List + Create)
 def training_page(request):
-    # Handle "Add Training" form
     if request.method == 'POST':
         form = TrainingForm(request.POST, request.FILES)
         if form.is_valid():
             new_training = form.save(commit=False)
             new_training.organizer = request.user
             new_training.save()
+            
+            from django.contrib import messages
+            messages.success(request, "Training created! You earned a 50€ bonus.")
+            
             return redirect('training_page')
     else:
         form = TrainingForm()
@@ -126,15 +129,25 @@ def training_page(request):
         'form': form
     })
 
-# 6. Registration Logic (Like Voting)
+# 6. Registration Logic (Like Voting), (Updated with Department Block)
 def register_training(request, training_id):
     training = get_object_or_404(Training, pk=training_id)
 
     if request.user.is_authenticated:
+        
+        # --- NEW: Check if the user is the organizer ---
+        if request.user == training.organizer:
+            messages.error(request, "You cannot register for a training that you created.")
+            return redirect('training_page')
+        # -----------------------------------------------
+
+        # Normal Registration / Un-registration
         if request.user in training.attendees.all():
-            training.attendees.remove(request.user) # Un-register
+            training.attendees.remove(request.user) 
+            messages.success(request, "You have left the training.")
         else:
-            training.attendees.add(request.user)    # Register
+            training.attendees.add(request.user)    
+            messages.success(request, "Successfully registered for the training!")
 
     return redirect('training_page')
 
@@ -177,8 +190,28 @@ def take_quiz(request, training_id):
             if selected_option == q.correct_option:
                 score += 1
         
+        attendee_dept = request.user.profile.department
+        organizer_dept = training.organizer.profile.department
+
+        # Check 1: Is the attendee from a DIFFERENT department?
+        if attendee_dept != organizer_dept:
+            
+            # Check 2: Has someone from a different department already completed this?
+            already_rewarded = QuizResult.objects.filter(
+                training=training
+            ).exclude(
+                user__profile__department=organizer_dept
+            ).exists()
+
+            # If this is the FIRST time someone from outside completed it:
+            if not already_rewarded:
+                # Give the organizer their 50 Euro bonus!
+                training.organizer.profile.bonus_euros += 50
+                training.organizer.profile.save()
+
         QuizResult.objects.create(training=training, user=request.user, score=score)
         
+        # Give the attendee their points for passing
         request.user.profile.total_score += (score * 10)
         request.user.profile.save()
 
@@ -189,14 +222,17 @@ def take_quiz(request, training_id):
 # 9. Registration Page
 def register_page(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = UserRegisterForm(request.POST) 
         if form.is_valid():
-            user = form.save()
-            # Log the user in immediately after signing up
+            user = form.save() 
+            selected_dept = form.cleaned_data.get('department')
+            user.profile.department = selected_dept
+            user.profile.save()
+
             login(request, user)
             return redirect('dashboard')
     else:
-        form = UserCreationForm()
+        form = UserRegisterForm()
 
     return render(request, 'gameplay/register.html', {'form': form})
 
