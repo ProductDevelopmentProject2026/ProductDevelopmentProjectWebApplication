@@ -78,78 +78,62 @@
     /* --- 5. THE 6 FACES --- */
     .face {
         position: absolute;
-        top: 0;
-        left: 0;
+        /* This correctly hides the inside of the box */
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
     }
 
-    /* Floor — sits on the grid at Z=0 */
+    /* Floor */
     .face--floor {
-        width: 80px;
-        height: 80px;
-        background-color: #cbd5e1;
+        top: 0; left: 0;
+        width: 80px; height: 80px;
+        background-color: #94a3b8;
         transform: translateZ(0px);
     }
 
-    /* Roof — the top face */
+    /* Roof */
     .face--roof {
-        width: 80px;
-        height: 80px;
+        top: 0; left: 0;
+        width: 80px; height: 80px;
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
         transform: translateZ(var(--h));
     }
 
-    /*
-       WALLS: Each wall is positioned at the edge of the 80x80 square,
-       then rotated to stand upright bridging from Z=0 to Z=var(--h).
-
-       Key: the wall dimensions are 80px wide × var(--h) tall.
-       We place them so they hinge from the floor edge and fold upward.
-    */
-
-    /* Front wall — along the BOTTOM edge (y=80px) */
+    /* Front wall (Facing Viewer) */
     .face--front {
-        width: 80px;
-        height: var(--h);
-        background-color: #e2e8f0;
-        top: auto;
-        bottom: 0;
-        left: 0;
+        top: auto; bottom: 0; left: 0;
+        width: 80px; height: var(--h);
+        background-color: #cbd5e1; /* Darker shade for lighting effect */
         transform-origin: bottom;
         transform: rotateX(-90deg);
     }
 
-    /* Back wall — along the TOP edge (y=0) */
+    /* Back wall (Hidden) */
     .face--back {
-        width: 80px;
-        height: var(--h);
+        top: 0; left: 0;
+        width: 80px; height: var(--h);
         background-color: #f1f5f9;
-        top: 0;
-        left: 0;
         transform-origin: top;
         transform: rotateX(90deg);
     }
 
-    /* Left wall — along the LEFT edge (x=0) */
+    /* Left wall (Facing Viewer) */
     .face--left {
-        height: 80px;
-        width: var(--h);
-        background-color: #cbd5e1;
-        top: 0;
-        left: 0;
+        top: 0; left: 0;
+        width: var(--h); height: 80px;
+        background-color: #e2e8f0; /* Lighter shade for lighting effect */
         transform-origin: left;
-        transform: rotateY(90deg);
+        transform: rotateY(-90deg);
     }
 
-    /* Right wall — along the RIGHT edge (x=80px) */
+    /* Right wall (Hidden) */
     .face--right {
-        height: 80px;
-        width: var(--h);
+        top: 0; left: auto; right: 0;
+        width: var(--h); height: 80px;
         background-color: #f1f5f9;
-        top: 0;
-        left: 0;
-        transform-origin: left;
-        transform: translateX(80px) rotateY(90deg);
+        transform-origin: right;
+        transform: rotateY(90deg);
     }
 
     /* --- Shadow on the ground --- */
@@ -197,20 +181,21 @@
         background-color: var(--accent);
         border-color: var(--accent);
     }
+    .building--accent .face--floor {
+        background-color: #0e7490;
+    }
+    /* Gradients perfectly aligned to vertical height */
     .building--accent .face--front {
         background: linear-gradient(to bottom, var(--accent), #0e7490);
     }
     .building--accent .face--back {
-        background: linear-gradient(to bottom, #22d3ee, var(--accent));
+        background: linear-gradient(to top, var(--accent), #22d3ee);
     }
     .building--accent .face--left {
-        background: linear-gradient(to right, #0e7490, var(--accent));
+        background: linear-gradient(to left, var(--accent), #0e7490);
     }
     .building--accent .face--right {
-        background: linear-gradient(to left, #22d3ee, var(--accent));
-    }
-    .building--accent .face--floor {
-        background-color: #0e7490;
+        background: linear-gradient(to right, var(--accent), #22d3ee);
     }
     .building--accent .label {
         background: var(--accent);
