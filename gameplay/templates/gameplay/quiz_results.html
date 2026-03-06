@@ -1,0 +1,50 @@
+{% extends 'gameplay/base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 50px auto; border-top: 5px solid #3498db;">
+    <h2 style="text-align: center;">Quiz Results</h2>
+    <h3 style="text-align: center; color: #2c3e50;">
+        You scored {{ score }} out of {{ total_questions }}!
+    </h3>
+
+    <div style="margin-top: 20px;">
+        {% for item in feedback %}
+            <div style="margin-bottom: 15px; padding: 15px; border-radius: 5px; 
+                        {% if item.is_correct %} background-color: #d4edda; border: 1px solid #c3e6cb; 
+                        {% else %} background-color: #f8d7da; border: 1px solid #f5c6cb; {% endif %}">
+                
+                <strong style="font-size: 1.1em;">{{ item.question_obj.text }}</strong>
+                
+                <p style="margin: 10px 0 5px 0;">
+                    <strong>Your Answer:</strong> 
+                    {{ item.selected|default:"Did not answer" }}
+                    
+                    {% if item.is_correct %}
+                        ✅
+                    {% else %}
+                        ❌
+                    {% endif %}
+                </p>
+
+                {% if not item.is_correct %}
+                    <p style="margin: 0; color: #721c24;">
+                        <strong>Correct Answer:</strong> {{ item.correct_answer }}
+                    </p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div style="text-align: center; margin-top: 25px;">
+        {% if is_department_quiz %}
+            <a href="{% url 'department_detail' department_id %}" style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Return to Department
+            </a>
+        {% else %}
+            <a href="{% url 'training_page' %}" style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Return to Trainings
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -185,37 +185,46 @@ def take_quiz(request, training_id):
 
     if request.method == 'POST':
         score = 0
+        feedback = []
+
         for q in questions:
             selected_option = request.POST.get(f'question_{q.id}')
-            if selected_option == q.correct_option:
+            is_correct = (selected_option == q.correct_option)
+            
+            if is_correct:
                 score += 1
-        
+            
+            # Save the details of this specific question to show the user later
+            feedback.append({
+                'question_obj': q,
+                'selected': selected_option,
+                'correct_answer': q.correct_option,
+                'is_correct': is_correct
+            })
+
         attendee_dept = request.user.profile.department
         organizer_dept = training.organizer.profile.department
 
-        # Check 1: Is the attendee from a DIFFERENT department?
         if attendee_dept != organizer_dept:
-            
-            # Check 2: Has someone from a different department already completed this?
             already_rewarded = QuizResult.objects.filter(
                 training=training
-            ).exclude(
-                user__profile__department=organizer_dept
-            ).exists()
+            ).exclude(user__profile__department=organizer_dept).exists()
 
-            # If this is the FIRST time someone from outside completed it:
             if not already_rewarded:
-                # Give the organizer their 50 Euro bonus!
                 training.organizer.profile.bonus_euros += 50
                 training.organizer.profile.save()
 
+        # Save result and give points
         QuizResult.objects.create(training=training, user=request.user, score=score)
-        
-        # Give the attendee their points for passing
         request.user.profile.total_score += (score * 10)
         request.user.profile.save()
 
-        return redirect('training_page')
+        return render(request, 'gameplay/quiz_results.html', {
+            'training': training,
+            'score': score,
+            'total_questions': questions.count(),
+            'feedback': feedback
+        })
 
     return render(request, 'gameplay/take_quiz.html', {'training': training, 'questions': questions})
 
@@ -333,19 +342,37 @@ def take_department_quiz(request, department_id):
 
     if request.method == 'POST':
         score = 0
+        feedback = []
+
         for q in questions:
             selected = request.POST.get(f'question_{q.id}')
-            if selected == q.correct_option:
+            is_correct = (selected == q.correct_option)
+            
+            if is_correct:
                 score += 1
+            
+            # Save the details of this specific question
+            feedback.append({
+                'question_obj': q,
+                'selected': selected,
+                'correct_answer': q.correct_option,
+                'is_correct': is_correct
+            })
 
         QuizResult.objects.create(department=department, user=request.user, score=score)
         
-        # Give Points (e.g., 50 points for learning about a department!)
+        # Give Points
         points_earned = score * 10
         request.user.profile.total_score += points_earned
         request.user.profile.save()
 
-        return redirect('department_detail', department_id=department.id)
+        return render(request, 'gameplay/quiz_results.html', {
+            'score': score,
+            'total_questions': questions.count(),
+            'feedback': feedback,
+            'is_department_quiz': True,       
+            'department_id': department.id    
+        })
 
     return render(request, 'gameplay/take_quiz.html', {
         'training': department,
