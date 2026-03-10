@@ -380,7 +380,7 @@ def take_department_quiz(request, department_id):
     })
 
 def campus_map(request):
-    departments = Department.objects.all()
+    departments = Department.objects.prefetch_related('question_set').all()
 
     # Gather total points for each department
     dept_data = []

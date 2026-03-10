@@ -68,22 +68,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': config(
         'DATABASE_URL',
-        # 🟢 TRICK: If DATABASE_URL is missing (like on your PC), default to SQLite
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        # 🔴 TRICK: If DATABASE_URL exists (like on GitHub Actions), use it!
         cast=dj_database_url.parse
     )
 }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'mydb',
-#         'USER': 'user',
-#         'PASSWORD': 'mypass',
-#         'HOST': '192.168.91.131', # или 'localhost', если порты проброшены
-#         'PORT': '5432',
-#     }
-# }
+
 
 
 
