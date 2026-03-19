@@ -74,13 +74,16 @@ def ideas_page(request):
             new_idea = form.save(commit=False)
             new_idea.submitted_by = request.user
             new_idea.save()
-            return redirect('ideas_page') # Stay on this page
+            return redirect('ideas_page') 
     else:
         form = IdeaForm()
 
-    # Get ideas sorted by votes
-    pending_ideas = Idea.objects.annotate(num_votes=Count('voters')).filter(is_approved=False).order_by('-num_votes')
-    
+    if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.department:
+        user_dept = request.user.profile.department
+        pending_ideas = Idea.objects.exclude(accepted_by=user_dept).annotate(num_votes=Count('voters')).order_by('-num_votes')
+    else:
+        pending_ideas = Idea.objects.annotate(num_votes=Count('voters')).order_by('-num_votes')
+
     return render(request, 'gameplay/ideas.html', {'ideas': pending_ideas, 'form': form})
 
 # 4. Voting Logic
@@ -299,12 +302,20 @@ def department_detail(request, department_id):
             video_id = match.group(1)
             video_embed_url = f"https://www.youtube.com/embed/{video_id}"
 
+    # Count how many ideas this specific department has accepted/installed
+    accepted_ideas_count = department.installed_ideas.count()
+    
+    # Count how many total ideas exist that this department HAS NOT accepted yet
+    new_ideas_count = Idea.objects.exclude(accepted_by=department).count()
+
     return render(request, 'gameplay/department_detail.html', {
         'department': department,
         'questions': questions,
         'has_taken_quiz': has_taken_quiz,
         'total_score': total_score,
         'video_embed_url': video_embed_url, 
+        'accepted_ideas_count': accepted_ideas_count,
+        'new_ideas_count': new_ideas_count,
     })
 
 # 13. Add Questions to Department
@@ -421,3 +432,30 @@ def campus_map(request):
         'departments': [d['dept'] for d in dept_data],
     }
     return render(request, 'gameplay/campus_map.html', context)
+
+@login_required
+def accept_idea(request, idea_id):
+    if not request.user.is_superuser:
+        messages.error(request, "Only admins can approve ideas.")
+        return redirect('ideas_page')
+
+    idea = get_object_or_404(Idea, pk=idea_id)
+    
+    # We check the Admin's department so we know WHO is accepting the idea
+    if hasattr(request.user, 'profile') and request.user.profile.department:
+        admin_dept = request.user.profile.department
+        
+        # Add the department to the idea's "accepted" list
+        idea.accepted_by.add(admin_dept)
+        messages.success(request, f"Idea successfully installed for {admin_dept.name}!")
+        
+        # Bonus: Give the person who submitted the idea 100 points!
+        if idea.submitted_by and hasattr(idea.submitted_by, 'profile'):
+            idea.submitted_by.profile.total_score += 100
+            idea.submitted_by.profile.save()
+            messages.success(request, f"100 bonus points automatically awarded to {idea.submitted_by.username}!")
+            
+    else:
+        messages.error(request, "You must be assigned to a department to accept ideas.")
+        
+    return redirect('ideas_page')

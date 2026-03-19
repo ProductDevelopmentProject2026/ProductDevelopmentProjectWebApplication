@@ -39,9 +39,9 @@
                         <br>
                         <small style="color: #888; font-style: italic;">
                             {% if idea.is_anonymous %}
-                                👻 Anonymous
+                                Anonymous
                             {% else %}
-                                👤 {{ idea.submitted_by.username }}
+                                {{ idea.submitted_by.username }}
                             {% endif %}
                         </small>
                         <br>
@@ -58,7 +58,17 @@
                                 <button style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px;">▲ Vote</button>
                             {% endif %}
                         </a>
-                    </div>
+
+                        {% if request.user.is_superuser %}
+                            <div style="margin-top: 8px;">
+                                <a href="{% url 'accept_idea' idea.id %}">
+                                    <button style="background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                                        ✅ Accept
+                                    </button>
+                                </a>
+                            </div>
+                        {% endif %}
+                        </div>
                 </li>
             {% empty %}
                 <li style="color: #777;">No ideas submitted yet.</li>

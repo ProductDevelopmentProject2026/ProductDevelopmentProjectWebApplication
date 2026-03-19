@@ -41,7 +41,7 @@ class Idea(models.Model):
     
     is_anonymous = models.BooleanField(default=False)
     
-    is_approved = models.BooleanField(default=False)
+    accepted_by = models.ManyToManyField('Department', related_name='installed_ideas', blank=True)
 
     def __str__(self):
         return self.title
