@@ -1,6 +1,7 @@
 {% extends 'gameplay/base.html' %}
 {% block content %}
-    <h1>👤 My Profile: {{ request.user.username }}</h1>
+    <h1>My Profile: {{ request.user.username }}</h1>
+    
     <div class="card">
         <h3>Details</h3>
         <p><strong>Department:</strong> {{ profile.department.name|default:"Not Assigned" }}</p>
@@ -10,6 +11,29 @@
         <p><strong>Bonuses:</strong> <span style="color: #27ae60; font-weight: bold; font-size: 1.2em;">{{ request.user.profile.bonus_euros }} Euros</span></p>
     </div>
 
+    <div class="card" style="margin-top: 20px; margin-bottom: 20px; border-top: 5px solid #9b59b6;">
+        <h3 style="margin-bottom: 15px; color: #2c3e50;">My Ideas Stats</h3>
+        
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1; background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 2em; font-weight: bold; color: #155724;">{{ accepted_ideas_count }}</span>
+                <br>
+                <span style="color: #155724; font-weight: 500;">Accepted & Installed</span>
+            </div>
+
+            <div style="flex: 1; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 2em; font-weight: bold; color: #856404;">{{ pending_ideas_count }}</span>
+                <br>
+                <span style="color: #856404; font-weight: 500;">Pending Review</span>
+            </div>
+            
+            <div style="flex: 1; background: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 2em; font-weight: bold; color: #383d41;">{{ my_ideas.count }}</span>
+                <br>
+                <span style="color: #383d41; font-weight: 500;">Total Submitted</span>
+            </div>
+        </div>
+    </div>
     <div class="card">
         <h3>My Submitted Ideas</h3>
         <ul>

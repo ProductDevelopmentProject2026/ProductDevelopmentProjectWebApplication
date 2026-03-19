@@ -100,12 +100,21 @@ def vote_idea(request, idea_id):
 def profile_page(request):
     # This fetches the profile for the person who is logged in
     user_profile = get_object_or_404(Profile, user=request.user)
-    # Fetch ideas submitted by this specific user
+    
+    # Fetch all ideas submitted by this specific user
     my_ideas = Idea.objects.filter(submitted_by=request.user)
+    
+    # An idea is "accepted" if the accepted_by field is not empty
+    accepted_ideas_count = my_ideas.filter(accepted_by__isnull=False).distinct().count()
+    
+    # An idea is "not accepted" (pending) if the accepted_by field is empty
+    pending_ideas_count = my_ideas.filter(accepted_by__isnull=True).count()
     
     return render(request, 'gameplay/profile.html', {
         'profile': user_profile,
-        'my_ideas': my_ideas
+        'my_ideas': my_ideas,
+        'accepted_ideas_count': accepted_ideas_count,
+        'pending_ideas_count': pending_ideas_count,
     })
 
 # 5. Training Page (List + Create)
