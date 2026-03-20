@@ -34,6 +34,7 @@
             </div>
         </div>
     </div>
+    
     <div class="card">
         <h3>My Submitted Ideas</h3>
         <ul>
@@ -44,4 +45,42 @@
             {% endfor %}
         </ul>
     </div>
-{% endblock %}
+
+    {% if training_stats %}
+        <div class="card" style="margin-top: 20px; border-top: 5px solid #3498db;">
+            <h3 style="color: #2c3e50; margin-bottom: 20px;">📈 My Hosted Trainings Analytics</h3>
+            
+            {% for stat in training_stats %}
+                <div style="background: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #34495e; font-size: 1.2em;">{{ stat.training.title }}</h4>
+                    
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <span style="background: #e0f7fa; color: #00838f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                            👥 Registered: {{ stat.registered_count }}
+                        </span>
+                        <span style="background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                            ✅ Finished: {{ stat.finished_count }}
+                        </span>
+                        <span style="background: #fff8e1; color: #f57f17; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                            ⭐ Avg Rating: {{ stat.avg_rating }} / 5.0
+                        </span>
+                    </div>
+
+                    {% if stat.feedbacks %}
+                        <strong style="color: #7f8c8d;">Attendee Comments:</strong>
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            {% for feedback in stat.feedbacks %}
+                                <li style="margin-bottom: 8px; color: #555;">
+                                    <strong>{{ feedback.user.username }}</strong> ({{ feedback.rating }}⭐): 
+                                    <i>"{{ feedback.suggestions|default:'No comment provided.' }}"</i>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p style="color: #95a5a6; font-style: italic; margin-top: 5px;">No feedback received yet.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endblock %}

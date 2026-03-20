@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Count, Sum
-from .models import Department, Idea, Profile, Training, Question, QuizResult, Lesson
+from django.db.models import Count, Sum, Avg
+from .models import Department, Idea, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback
 from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm        
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -98,23 +98,37 @@ def vote_idea(request, idea_id):
 
 @login_required
 def profile_page(request):
-    # This fetches the profile for the person who is logged in
     user_profile = get_object_or_404(Profile, user=request.user)
-    
-    # Fetch all ideas submitted by this specific user
     my_ideas = Idea.objects.filter(submitted_by=request.user)
-    
-    # An idea is "accepted" if the accepted_by field is not empty
     accepted_ideas_count = my_ideas.filter(accepted_by__isnull=False).distinct().count()
-    
-    # An idea is "not accepted" (pending) if the accepted_by field is empty
     pending_ideas_count = my_ideas.filter(accepted_by__isnull=True).count()
-    
+
+    # --- NEW: Training Analytics Logic ---
+    my_trainings = Training.objects.filter(organizer=request.user)
+    training_stats = []
+
+    for t in my_trainings:
+        registered = t.attendees.count()
+        # Count how many unique users actually finished the quiz
+        finished = QuizResult.objects.filter(training=t).values('user').distinct().count()
+        
+        feedbacks = t.feedbacks.all().order_by('-created_at')
+        avg_rating = feedbacks.aggregate(Avg('rating'))['rating__avg'] or 0
+
+        training_stats.append({
+            'training': t,
+            'registered_count': registered,
+            'finished_count': finished,
+            'avg_rating': round(avg_rating, 1), # Round to 1 decimal place (e.g., 4.5)
+            'feedbacks': feedbacks
+        })
+
     return render(request, 'gameplay/profile.html', {
         'profile': user_profile,
         'my_ideas': my_ideas,
         'accepted_ideas_count': accepted_ideas_count,
         'pending_ideas_count': pending_ideas_count,
+        'training_stats': training_stats, # Pass stats to the template
     })
 
 # 5. Training Page (List + Create)
@@ -468,3 +482,23 @@ def accept_idea(request, idea_id):
         messages.error(request, "You must be assigned to a department to accept ideas.")
         
     return redirect('ideas_page')
+
+@login_required
+def submit_feedback(request, training_id):
+    if request.method == 'POST':
+        training = get_object_or_404(Training, pk=training_id)
+        rating = request.POST.get('rating')
+        suggestions = request.POST.get('suggestions')
+
+        # Prevent duplicate feedback from the same user
+        if not TrainingFeedback.objects.filter(training=training, user=request.user).exists():
+            TrainingFeedback.objects.create(
+                training=training,
+                user=request.user,
+                rating=rating,
+                suggestions=suggestions
+            )
+            messages.success(request, "Thank you! Your feedback has been sent to the organizer.")
+            
+        return redirect('training_page')
+    return redirect('dashboard')

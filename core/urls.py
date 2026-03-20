@@ -7,7 +7,8 @@ from gameplay.views import (
     dashboard, departments_page, ideas_page, vote_idea, 
     profile_page, training_page, register_training, add_question, 
     take_quiz, register_page, manage_lessons, view_lesson,
-    department_detail, add_department_question, take_department_quiz, accept_idea
+    department_detail, add_department_question, take_department_quiz, accept_idea,
+    submit_feedback
 )
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,6 +30,7 @@ urlpatterns = [
     path('department/<int:department_id>/add-quiz/', add_department_question, name='add_department_question'),
     path('department/<int:department_id>/take-quiz/', take_department_quiz, name='take_department_quiz'),
     path('idea/<int:idea_id>/accept/', accept_idea, name='accept_idea'),
+    path('training/<int:training_id>/feedback/', submit_feedback, name='submit_feedback'),
 ]
 
 if settings.DEBUG:
