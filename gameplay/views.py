@@ -36,7 +36,6 @@ def dashboard(request):
               '#8b5cf6', '#ec4899', '#14b8a6', '#eab308']
 
     # Grid positions — spread buildings nicely within the grid
-    # (top%, left%) — keep them away from edges so 80px buildings stay visible
     positions = [
         (15, 30), (15, 60),
         (38, 15), (38, 45), (38, 72),
@@ -45,7 +44,8 @@ def dashboard(request):
     ]
 
     for i, d in enumerate(dept_data):
-        ratio = d['total_points'] / max_points
+        ratio = (d['total_points'] / max_points) ** 0.5
+        
         d['dept'].building_height = int(MIN_HEIGHT + ratio * (MAX_HEIGHT - MIN_HEIGHT))
         d['dept'].total_points_display = d['total_points']
         d['dept'].color = colors[i % len(colors)]
@@ -450,7 +450,10 @@ def campus_map(request):
         'Maintenance': 'maint',
     }
     for d in dept_data:
-        d['dept'].slug = slug_map.get(d['dept'].name, d['dept'].name.lower())
+        ratio = (d['total_points'] / max_points) ** 0.5
+        
+        d['dept'].building_height = int(MIN_HEIGHT + ratio * (MAX_HEIGHT - MIN_HEIGHT))
+        d['dept'].total_points = d['total_points']
 
     context = {
         'departments': [d['dept'] for d in dept_data],
