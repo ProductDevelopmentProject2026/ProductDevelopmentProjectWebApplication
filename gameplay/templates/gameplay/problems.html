@@ -1,0 +1,57 @@
+{% extends 'gameplay/base.html' %}
+
+{% block content %}
+    
+    <div class="card" style="border-left: 5px solid #f1c40f; max-width: 600px; margin-bottom: 30px;">
+        <h2>Share a Problem</h2>
+        <p style="color: #7f8c8d;">Share a workplace problem or question you have. Other employees can claim to solve it and earn bonus points!</p>
+        <form method="post">
+            {% csrf_token %}
+            <div style="margin-bottom: 15px;">
+                {{ form.description }}
+            </div>
+            <button type="submit" style="background: #f1c40f; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px;">
+                Share Problem
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Unsolved Problems / Questions</h2>
+        <ul style="padding-left: 0; list-style: none;">
+            {% for problem in problems %}
+                <li style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-start;">
+                    
+                    <div style="padding-right: 15px; flex-grow: 1;">
+                        <span style="font-style: italic; color: #888;">👤 {{ problem.submitted_by.username }}</span>
+                        <br>
+                        <span style="font-size: 1.1em; color: #2c3e50;">{{ problem.description }}</span>
+                        <br>
+                        <small style="color: #888;">Shared: {{ problem.submitted_at|date:"M j, Y, g:i a" }}</small>
+                    </div>
+
+                    <div style="text-align: right; min-width: 150px;">
+                        {% if not problem.is_claimed_solved and not problem.is_solved and problem.submitted_by != request.user %}
+                            <a href="{% url 'claim_solution' problem.id %}">
+                                <button style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold;">
+                                    I solved this! ▲
+                                </button>
+                            </a>
+                        {% elif problem.is_claimed_solved %}
+                            <span style="background: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
+                                Solution Claimed by {{ problem.claimed_by.username }} ⌛
+                            </span>
+                        {% elif problem.is_solved %}
+                            <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                                Perfect! Solved. ✅
+                            </span>
+                        {% endif %}
+                    </div>
+                </li>
+            {% empty %}
+                <li style="color: #777; text-align: center;">No unresolved problems currently. Share your problems to get help!</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+{% endblock %}

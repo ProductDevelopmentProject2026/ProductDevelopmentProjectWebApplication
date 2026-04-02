@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 # 1. Departments for the "Battle" (Logistics vs Accounting)
 class Department(models.Model):
@@ -21,6 +22,12 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.department})"
+    
+    @property
+    def total_problems_solved(self):
+        """Calculates total problems this user helped solve, which are confirmed by the submitter."""
+        # Find problems where this user is the "claimed_by" and the original submitter confirmed "is_solved=True"
+        return Problem.objects.filter(claimed_by=self.user, is_solved=True).count()
 
 # 3. To track actions like "Safety Test" or "Kilometers"
 class ActionLog(models.Model):
@@ -121,3 +128,22 @@ class TrainingFeedback(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.training.title} ({self.rating} Stars)"
+
+class Problem(models.Model):
+    description = models.TextField()
+    submitted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_problems')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    
+    # Track who claimed to solve it and when
+    claimed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='claimed_solutions')
+    is_claimed_solved = models.BooleanField(default=False)
+    
+    solution_description = models.TextField(blank=True, null=True)
+    solution_image = models.ImageField(upload_to='solutions/', blank=True, null=True)
+
+    # Track when the original submitter confirms it is solved
+    is_solved = models.BooleanField(default=False)
+    solved_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.submitted_by.username}'s problem (Solved: {self.is_solved})"

@@ -11,26 +11,26 @@
         <p><strong>Bonuses:</strong> <span style="color: #27ae60; font-weight: bold; font-size: 1.2em;">{{ request.user.profile.bonus_euros }} Euros</span></p>
     </div>
 
-    <div class="card" style="margin-top: 20px; margin-bottom: 20px; border-top: 5px solid #9b59b6;">
-        <h3 style="margin-bottom: 15px; color: #2c3e50;">My Ideas Stats</h3>
+    <div class="card" style="margin-top: 20px; margin-bottom: 20px; border-top: 5px solid #27ae60;">
+        <h3 style="margin-bottom: 15px; color: #2c3e50;">📊 Innovation & Help Stats</h3>
         
         <div style="display: flex; gap: 20px;">
-            <div style="flex: 1; background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; text-align: center;">
-                <span style="font-size: 2em; font-weight: bold; color: #155724;">{{ accepted_ideas_count }}</span>
+            <div style="flex: 1; background: #e0f2f1; border: 1px solid #b2dfdb; padding: 15px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 2em; font-weight: bold; color: #00897b;">{{ accepted_ideas_count }}</span>
                 <br>
-                <span style="color: #155724; font-weight: 500;">Accepted & Installed</span>
+                <span style="color: #00897b; font-weight: 500;">Ideas Accepted</span>
             </div>
 
+            <div style="flex: 1; background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 2em; font-weight: bold; color: #2e7d32;">{{ profile.total_problems_solved }}</span>
+                <br>
+                <span style="color: #2e7d32; font-weight: 500;">Problems Solved</span>
+            </div>
+            
             <div style="flex: 1; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; text-align: center;">
                 <span style="font-size: 2em; font-weight: bold; color: #856404;">{{ pending_ideas_count }}</span>
                 <br>
-                <span style="color: #856404; font-weight: 500;">Pending Review</span>
-            </div>
-            
-            <div style="flex: 1; background: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; border-radius: 8px; text-align: center;">
-                <span style="font-size: 2em; font-weight: bold; color: #383d41;">{{ my_ideas.count }}</span>
-                <br>
-                <span style="color: #383d41; font-weight: 500;">Total Submitted</span>
+                <span style="color: #856404; font-weight: 500;">Pending Ideas Review</span>
             </div>
         </div>
     </div>
@@ -46,6 +46,52 @@
         </ul>
     </div>
 
+    <div class="card" style="border-top: 5px solid #f39c12; margin-bottom: 20px;">
+        <h3>My Shared Problems (Await My Confirmation)</h3>
+        <p style="color: #7f8c8d; margin-top: 0;">Confirm if a fellow employee's suggested solution actually worked for your problem.</p>
+        <ul style="padding-left: 0; list-style: none; border-left: 3px solid #f39c12; padding-left: 15px;">
+            {% for problem in request.user.submitted_problems.all %}
+                {% if problem.is_claimed_solved and not problem.is_solved %}
+                    <li style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div style="padding-right: 15px; flex-grow: 1;">
+                                <strong style="color: #2c3e50; font-size: 1.1em;">Problem:</strong> {{ problem.description }}
+                                <br>
+                                <span style="color: #7f8c8d;">Solution provided by: <strong style="color: #34495e;">{{ problem.claimed_by.username }}</strong></span>
+                            </div>
+                            <div style="text-align: right; min-width: 250px;">
+                                <a href="{% url 'confirm_solved' problem.id %}">
+                                    <button style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold;">
+                                        ✅ It Worked! (+10 pts)
+                                    </button>
+                                </a>
+                                <a href="{% url 'reject_solution' problem.id %}" style="margin-left: 5px;">
+                                    <button style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px;">
+                                        ❌ Did not work
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div style="background: #f4f6f7; padding: 15px; border-radius: 5px; border-left: 4px solid #3498db;">
+                            <strong style="color: #2980b9;">Suggested Solution:</strong>
+                            <p style="margin-top: 5px; margin-bottom: 10px; white-space: pre-wrap;">{{ problem.solution_description }}</p>
+                            
+                            {% if problem.solution_image %}
+                                <a href="{{ problem.solution_image.url }}" target="_blank">
+                                    <img src="{{ problem.solution_image.url }}" alt="Solution Screenshot" style="max-height: 200px; border-radius: 5px; border: 1px solid #bdc3c7;">
+                                </a>
+                                <br><small style="color: #7f8c8d;">(Click image to enlarge)</small>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endif %}
+            {% empty %}
+                <li style="color: #777; font-style: italic;">You haven't shared any problems requiring confirmation.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
     {% if training_stats %}
         <div class="card" style="margin-top: 20px; border-top: 5px solid #3498db;">
             <h3 style="color: #2c3e50; margin-bottom: 20px;">📈 My Hosted Trainings Analytics</h3>
@@ -56,7 +102,7 @@
                     
                     <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                         <span style="background: #e0f7fa; color: #00838f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
-                            👥 Registered: {{ stat.registered_count }}
+                            Registered: {{ stat.registered_count }}
                         </span>
                         <span style="background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
                             ✅ Finished: {{ stat.finished_count }}
@@ -83,4 +129,4 @@
             {% endfor %}
         </div>
     {% endif %}
-    {% endblock %}
+{% endblock %}

@@ -1,7 +1,7 @@
 from django import forms
 from .models import Idea, Training, Question, Lesson
 from django.contrib.auth.models import User
-from .models import Department
+from .models import Department, Problem
 from django.contrib.auth.forms import UserCreationForm
 
 
@@ -69,3 +69,23 @@ class UserRegisterForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
         fields = UserCreationForm.Meta.fields + ('email',)
+
+class ProblemForm(forms.ModelForm):
+    class Meta:
+        model = Problem
+        fields = ['description'] # User only types the description
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Describe your problem here...'})
+        }
+
+class SolutionForm(forms.ModelForm):
+    class Meta:
+        model = Problem
+        fields = ['solution_description', 'solution_image']
+        labels = {
+            'solution_description': 'Step-by-Step Explanation',
+            'solution_image': 'Attach a Screenshot (Optional)'
+        }
+        widgets = {
+            'solution_description': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Explain exactly how to fix this issue...'}),
+        }

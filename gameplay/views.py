@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg
-from .models import Department, Idea, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback
-from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm        
+from .models import Department, Idea, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem
+from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm        
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 import re  
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
 
 # 1. Home Page (Welcome)
 @login_required
@@ -502,3 +503,107 @@ def submit_feedback(request, training_id):
             
         return redirect('training_page')
     return redirect('dashboard')
+
+# 15. Problems Page (Form + List of unsolved problems)
+@login_required
+def problems_page(request):
+    if request.method == 'POST':
+        form = ProblemForm(request.POST)
+        if form.is_valid():
+            problem = form.save(commit=False)
+            problem.submitted_by = request.user
+            problem.save()
+            messages.success(request, "Your problem has been shared! A fellow employee might help solve it.")
+            return redirect('problems_page')
+    else:
+        form = ProblemForm()
+
+    # List problems that are not yet confirmed solved, newest first
+    unsolved_problems = Problem.objects.filter(is_solved=False).order_by('-submitted_at')
+    
+    return render(request, 'gameplay/problems.html', {
+        'form': form,
+        'problems': unsolved_problems,
+    })
+
+# 16. A helper claims they solved a problem
+@login_required
+def claim_solution(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    
+    if problem.submitted_by == request.user:
+        messages.error(request, "You cannot solve your own problem!")
+        return redirect('problems_page')
+    elif problem.is_solved or problem.is_claimed_solved:
+        messages.error(request, "This problem is already being handled.")
+        return redirect('problems_page')
+
+    # If the user submits the form
+    if request.method == 'POST':
+        # request.FILES is required for the image upload!
+        form = SolutionForm(request.POST, request.FILES, instance=problem)
+        if form.is_valid():
+            problem = form.save(commit=False)
+            problem.claimed_by = request.user
+            problem.is_claimed_solved = True
+            problem.save()
+            messages.success(request, f"Your solution has been sent to {problem.submitted_by.username} for review!")
+            return redirect('problems_page')
+    else:
+        form = SolutionForm(instance=problem)
+        
+    return render(request, 'gameplay/submit_solution.html', {'form': form, 'problem': problem})
+
+# 17. The submitter confirms the solution works (The big reward point view)
+@login_required
+def confirm_solved(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    
+    # Security: Only the original submitter can confirm the solution
+    if problem.submitted_by != request.user:
+        messages.error(request, "Only the person who shared the problem can confirm the solution.")
+        return redirect('profile_page')
+    
+    # Security: Solution must be claimed first, and prevent duplicate confirming
+    if not problem.is_claimed_solved or not problem.claimed_by:
+        messages.error(request, "No one has claimed to solve this problem yet.")
+        return redirect('profile_page')
+    
+    if problem.is_solved:
+        messages.error(request, "This problem has already been confirmed.")
+        return redirect('profile_page')
+        
+    # --- STEP 2: Give the Reward Points! (+10 points) ---
+    # Find the helper who claimed the solution
+    helper_profile = problem.claimed_by.profile
+    
+    # Give the points bonus
+    helper_profile.total_score += 10
+    helper_profile.save()
+    
+    # Step 3: Finalize the problem
+    problem.is_solved = True
+    problem.solved_at = timezone.now()
+    problem.save()
+    
+    messages.success(request, f"Perfect! The problem is confirmed solved. +10 points 자동으로 added to {problem.claimed_by.username}'s profile!")
+    return redirect('profile_page')
+
+# 18. Submitter rejects the solution
+@login_required
+def reject_solution(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    
+    if problem.submitted_by != request.user:
+        messages.error(request, "Only the person who shared the problem can reject a solution.")
+        return redirect('profile_page')
+
+    # Revert to "unsolved", clear the helper's claim, text, and image
+    problem.claimed_by = None
+    problem.is_claimed_solved = False
+    problem.solution_description = None
+    problem.solution_image = None
+    problem.save()
+    
+    messages.success(request, "Solution rejected. The problem is now listed for others to solve.")
+    return redirect('profile_page')
