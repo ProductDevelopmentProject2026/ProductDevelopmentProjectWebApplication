@@ -29,50 +29,64 @@
     </div>
 
     <div class="card">
-        <h2>Recent Ideas (Kaizen)</h2>
-        <ul style="padding-left: 0; list-style: none;">
-            {% for idea in ideas %}
-                <li style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    
-                    <div style="padding-right: 15px;">
-                        <strong style="font-size: 1.1em;">{{ idea.title }}</strong>
-                        <br>
-                        <small style="color: #888; font-style: italic;">
-                            {% if idea.is_anonymous %}
-                                Anonymous
-                            {% else %}
-                                {{ idea.submitted_by.username }}
-                            {% endif %}
-                        </small>
-                        <br>
-                        <span style="color: #555;">{{ idea.description }}</span>
-                    </div>
-
-                    <div style="text-align: center; min-width: 80px;">
-                        <span style="font-size: 1.4em; font-weight: bold; color: #2c3e50;">{{ idea.voters.count }}</span>
-                        <br>
-                        <a href="{% url 'vote_idea' idea.id %}" style="text-decoration: none;">
-                            {% if request.user in idea.voters.all %}
-                                <button style="background: #95a5a6; color: white; border: none; padding: 5px 10px; border-radius: 4px;">✓ Voted</button>
-                            {% else %}
-                                <button style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px;">▲ Vote</button>
-                            {% endif %}
-                        </a>
-
-                        {% if request.user.is_superuser %}
-                            <div style="margin-top: 8px;">
-                                <a href="{% url 'accept_idea' idea.id %}">
-                                    <button style="background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
-                                        ✅ Accept
-                                    </button>
-                                </a>
-                            </div>
-                        {% endif %}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">Recent Ideas (Kaizen)</h2>
+            <form method="get" style="display: flex; gap: 10px;">
+                <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search ideas..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 250px;">
+                <button type="submit" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Search</button>
+                {% if search_query %}
+                    <a href="{% url 'ideas_page' %}" style="padding: 8px 15px; text-decoration: none; color: #555; background: #eee; border-radius: 4px;">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+        {% for cat_data in categorized_ideas %}
+            <h3 style="margin-top: 30px; border-bottom: 2px solid #3498db; padding-bottom: 5px; color: #2c3e50;">{{ cat_data.category.name }}</h3>
+            <ul style="padding-left: 0; list-style: none;">
+                {% for idea in cat_data.ideas %}
+                    <li style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        
+                        <div style="padding-right: 15px;">
+                            <strong style="font-size: 1.1em;">{{ idea.title }}</strong>
+                            <br>
+                            <small style="color: #888; font-style: italic;">
+                                {% if idea.is_anonymous %}
+                                    Anonymous
+                                {% else %}
+                                    {{ idea.submitted_by.username }}
+                                {% endif %}
+                            </small>
+                            <br>
+                            <span style="color: #555;">{{ idea.description }}</span>
                         </div>
-                </li>
-            {% empty %}
-                <li style="color: #777;">No ideas submitted yet.</li>
-            {% endfor %}
-        </ul>
+
+                        <div style="text-align: center; min-width: 80px;">
+                            <span style="font-size: 1.4em; font-weight: bold; color: #2c3e50;">{{ idea.voters.count }}</span>
+                            <br>
+                            <a href="{% url 'vote_idea' idea.id %}" style="text-decoration: none;">
+                                {% if request.user in idea.voters.all %}
+                                    <button style="background: #95a5a6; color: white; border: none; padding: 5px 10px; border-radius: 4px;">✓ Voted</button>
+                                {% else %}
+                                    <button style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px;">▲ Vote</button>
+                                {% endif %}
+                            </a>
+
+                            {% if request.user.is_superuser %}
+                                <div style="margin-top: 8px;">
+                                    <a href="{% url 'accept_idea' idea.id %}">
+                                        <button style="background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                                            ✅ Accept
+                                        </button>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% empty %}
+                    <li style="color: #777;">No ideas in this category yet.</li>
+                {% endfor %}
+            </ul>
+        {% empty %}
+            <p style="color: #777;">No ideas submitted yet.</p>
+        {% endfor %}
     </div>
 {% endblock %}

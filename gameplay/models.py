@@ -39,6 +39,13 @@ class ActionLog(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.action_name} (+{self.points})"
 
+class IdeaCategory(models.Model):
+    name = models.CharField(max_length=100)
+    keywords = models.TextField(help_text="Comma-separated keywords for auto-identification")
+
+    def __str__(self):
+        return self.name
+
 # 4. For the "Ideas Marathon" (Kaizen)
 class Idea(models.Model):
     title = models.CharField(max_length=200)
@@ -49,6 +56,7 @@ class Idea(models.Model):
     is_anonymous = models.BooleanField(default=False)
     
     accepted_by = models.ManyToManyField('Department', related_name='installed_ideas', blank=True)
+    category = models.ForeignKey(IdeaCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='ideas')
 
     def __str__(self):
         return self.title

@@ -39,7 +39,16 @@
         </form>
     </div>
 
-    <h1>🎓 Upcoming Sessions</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 20px;">
+        <h1 style="margin: 0;">🎓 Upcoming Sessions</h1>
+        <form method="get" style="display: flex; gap: 10px;">
+            <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search trainings..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 250px;">
+            <button type="submit" style="background: #9b59b6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Search</button>
+            {% if search_query %}
+                <a href="{% url 'training_page' %}" style="padding: 8px 15px; text-decoration: none; color: #555; background: #eee; border-radius: 4px;">Clear</a>
+            {% endif %}
+        </form>
+    </div>
     
     {% for training in trainings %}
     <div class="card">

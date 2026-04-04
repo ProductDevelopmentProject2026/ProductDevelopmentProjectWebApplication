@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Count, Sum, Avg
-from .models import Department, Idea, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem
+from django.db.models import Count, Sum, Avg, Q
+from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem
 from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm        
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -74,18 +74,62 @@ def ideas_page(request):
         if form.is_valid():
             new_idea = form.save(commit=False)
             new_idea.submitted_by = request.user
+            
+            # Auto-categorization logic
+            text_to_search = (new_idea.title + " " + new_idea.description).lower()
+            categories = IdeaCategory.objects.all()
+            for cat in categories:
+                kws = [k.strip().lower() for k in cat.keywords.split(',')]
+                if any(kw in text_to_search for kw in kws if kw):
+                    new_idea.category = cat
+                    break
+                    
             new_idea.save()
             return redirect('ideas_page') 
     else:
         form = IdeaForm()
 
+    search_query = request.GET.get('q', '')
+
     if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.department:
         user_dept = request.user.profile.department
-        pending_ideas = Idea.objects.exclude(accepted_by=user_dept).annotate(num_votes=Count('voters')).order_by('title')
+        pending_ideas = Idea.objects.exclude(accepted_by=user_dept)
     else:
-        pending_ideas = Idea.objects.annotate(num_votes=Count('voters')).order_by('title')
+        pending_ideas = Idea.objects.all()
 
-    return render(request, 'gameplay/ideas.html', {'ideas': pending_ideas, 'form': form})
+    if search_query:
+        pending_ideas = pending_ideas.filter(
+            Q(title__icontains=search_query) | Q(description__icontains=search_query)
+        )
+
+    pending_ideas = pending_ideas.annotate(num_votes=Count('voters')).order_by('title')
+
+    categories = IdeaCategory.objects.all()
+    categorized_ideas = []
+    
+    for cat in categories:
+        cat_ideas = pending_ideas.filter(category=cat)
+        if cat_ideas.exists() or search_query:  # show category if exists or if searching
+            categorized_ideas.append({
+                'category': cat,
+                'ideas': cat_ideas
+            })
+            
+    uncategorized = pending_ideas.filter(category__isnull=True)
+    if uncategorized.exists() or search_query:
+        # We can simulate a category object via dictionary for the template
+        class DummyCategory:
+            name = "General / Other"
+        categorized_ideas.append({
+            'category': DummyCategory(),
+            'ideas': uncategorized
+        })
+
+    return render(request, 'gameplay/ideas.html', {
+        'categorized_ideas': categorized_ideas, 
+        'form': form,
+        'search_query': search_query
+    })
 
 # 4. Voting Logic
 def vote_idea(request, idea_id):
@@ -148,12 +192,22 @@ def training_page(request):
     else:
         form = TrainingForm()
 
+    search_query = request.GET.get('q', '')
+
+    trainings = Training.objects.all()
+
+    if search_query:
+        trainings = trainings.filter(
+            Q(title__icontains=search_query) | Q(description__icontains=search_query)
+        )
+
     # Get all trainings, sorted by the first letter (title)
-    trainings = Training.objects.all().order_by('title')
+    trainings = trainings.order_by('title')
 
     return render(request, 'gameplay/training.html', {
         'trainings': trainings, 
-        'form': form
+        'form': form,
+        'search_query': search_query
     })
 
 # 6. Registration Logic (Like Voting), (Updated with Department Block)
@@ -610,3 +664,19 @@ def reject_solution(request, problem_id):
     
     messages.success(request, "Solution rejected. The problem is now listed for others to solve.")
     return redirect('profile_page')
+
+# 19. Redeem Gift Card Page
+@login_required
+def redeem_page(request):
+    if request.method == 'POST':
+        # Cost is 100 points
+        if request.user.profile.total_score >= 100:
+            request.user.profile.total_score -= 100
+            request.user.profile.bonus_euros += 20
+            request.user.profile.save()
+            messages.success(request, "Success! You have redeemed 100 points for a 20€ Gift Card! Check your profile balance.")
+        else:
+            messages.error(request, "Not enough points! You need at least 100 points.")
+        return redirect('redeem_page')
+        
+    return render(request, 'gameplay/redeem.html', {'profile': request.user.profile})

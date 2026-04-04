@@ -8,7 +8,8 @@ from gameplay.views import (
     profile_page, training_page, register_training, add_question, 
     take_quiz, register_page, manage_lessons, view_lesson,
     department_detail, add_department_question, take_department_quiz, accept_idea,
-    submit_feedback, problems_page, claim_solution, confirm_solved, reject_solution
+    submit_feedback, problems_page, claim_solution, confirm_solved, reject_solution,
+    redeem_page
 )
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,6 +25,7 @@ urlpatterns = [
     path('training/add-quiz/<int:training_id>/', add_question, name='add_question'),
     path('training/take-quiz/<int:training_id>/', take_quiz, name='take_quiz'),
     path('register/', register_page, name='register'),
+    path('redeem/', redeem_page, name='redeem_page'),
     path('training/<int:training_id>/lessons/', manage_lessons, name='manage_lessons'),
     path('lesson/<int:lesson_id>/', view_lesson, name='view_lesson'),
     path('department/<int:department_id>/', department_detail, name='department_detail'),
