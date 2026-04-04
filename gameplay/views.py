@@ -81,9 +81,9 @@ def ideas_page(request):
 
     if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.department:
         user_dept = request.user.profile.department
-        pending_ideas = Idea.objects.exclude(accepted_by=user_dept).annotate(num_votes=Count('voters')).order_by('-num_votes')
+        pending_ideas = Idea.objects.exclude(accepted_by=user_dept).annotate(num_votes=Count('voters')).order_by('title')
     else:
-        pending_ideas = Idea.objects.annotate(num_votes=Count('voters')).order_by('-num_votes')
+        pending_ideas = Idea.objects.annotate(num_votes=Count('voters')).order_by('title')
 
     return render(request, 'gameplay/ideas.html', {'ideas': pending_ideas, 'form': form})
 
@@ -100,12 +100,12 @@ def vote_idea(request, idea_id):
 @login_required
 def profile_page(request):
     user_profile = get_object_or_404(Profile, user=request.user)
-    my_ideas = Idea.objects.filter(submitted_by=request.user)
+    my_ideas = Idea.objects.filter(submitted_by=request.user).order_by('title')
     accepted_ideas_count = my_ideas.filter(accepted_by__isnull=False).distinct().count()
     pending_ideas_count = my_ideas.filter(accepted_by__isnull=True).count()
 
     # --- NEW: Training Analytics Logic ---
-    my_trainings = Training.objects.filter(organizer=request.user)
+    my_trainings = Training.objects.filter(organizer=request.user).order_by('title')
     training_stats = []
 
     for t in my_trainings:
@@ -148,8 +148,8 @@ def training_page(request):
     else:
         form = TrainingForm()
 
-    # Get all trainings, sorted by newest first
-    trainings = Training.objects.all().order_by('date_time')
+    # Get all trainings, sorted by the first letter (title)
+    trainings = Training.objects.all().order_by('title')
 
     return render(request, 'gameplay/training.html', {
         'trainings': trainings, 
