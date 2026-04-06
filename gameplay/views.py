@@ -805,75 +805,105 @@ def bulk_invite_upload(request):
         csv_file = request.FILES.get('csv_file')
         
         if not tenant_id or not csv_file:
-            messages.error(request, "Please select an organization and upload a CSV file.")
+            messages.error(request, "Please select an organization and upload a file.")
             return redirect('admin:gameplay_invite_bulk')
             
-        if not csv_file.name.endswith('.csv'):
-            messages.error(request, "The uploaded file is not a valid CSV.")
+        is_csv = csv_file.name.lower().endswith('.csv')
+        is_txt = csv_file.name.lower().endswith('.txt')
+        
+        if not (is_csv or is_txt):
+            messages.error(request, "The uploaded file must be a .csv or .txt file.")
             return redirect('admin:gameplay_invite_bulk')
         
         tenant = get_object_or_404(Tenant, pk=tenant_id)
         
         try:
             decoded_file = csv_file.read().decode('utf-8-sig')
-            reader = csv.reader(io.StringIO(decoded_file))
         except Exception as e:
-            messages.error(request, f"Error reading CSV file: {e}")
+            messages.error(request, f"Error reading file: {e}")
             return redirect('admin:gameplay_invite_bulk')
         
+        summary = {'created': 0, 'skipped': 0, 'refreshed': 0, 'errors': 0}
         results = []
-        header = next(reader, None)
-        
-        if not header:
-            messages.error(request, "The CSV file is empty.")
-            return redirect('admin:gameplay_invite_bulk')
-        
-        email_idx = 0
-        lower_header = [str(h).strip().lower() for h in header]
-        if 'email' in lower_header:
-            email_idx = lower_header.index('email')
+
+        if is_csv:
+            reader = csv.reader(io.StringIO(decoded_file))
+            header = next(reader, None)
+            
+            if not header:
+                messages.error(request, "The CSV file is empty.")
+                return redirect('admin:gameplay_invite_bulk')
+            
+            email_idx = 0
+            lower_header = [str(h).strip().lower() for h in header]
+            if 'email' in lower_header:
+                email_idx = lower_header.index('email')
+            else:
+                # If there's no header row, process the very first row as data
+                _process_csv_email(header[email_idx], tenant, request, results, summary)
+            
+            for row in reader:
+                if row and len(row) > email_idx:
+                    _process_csv_email(row[email_idx], tenant, request, results, summary)
         else:
-            # If there's no header row, process the very first row as data
-            _process_csv_email(header[email_idx], tenant, request, results)
-        
-        for row in reader:
-            if row and len(row) > email_idx:
-                _process_csv_email(row[email_idx], tenant, request, results)
+            lines = decoded_file.splitlines()
+            if not lines:
+                messages.error(request, "The TXT file is empty.")
+                return redirect('admin:gameplay_invite_bulk')
+                
+            for line in lines:
+                line = line.strip()
+                if line:
+                    _process_csv_email(line, tenant, request, results, summary)
                 
         return render(request, 'gameplay/bulk_invite_results.html', {
             'results': results, 
+            'summary': summary,
             'tenant': tenant
         })
     
     tenants = Tenant.objects.all().order_by('name')
     return render(request, 'gameplay/bulk_invite.html', {'tenants': tenants})
 
-def _process_csv_email(raw_email, tenant, request, results):
-    email = raw_email.strip().lower()
-    if not email:
-        return
-    
-    # Deduce the host cleanly (e.g. stripping existing subdomains or 'www.')
-    base_host = request.get_host()
-    if base_host.startswith('www.'):
-        base_host = base_host[4:]
-    for t in Tenant.objects.all():
-        if base_host.startswith(t.subdomain + '.'):
-            base_host = base_host[len(t.subdomain)+1:]
-            break
-            
-    invite = Invite.objects.filter(email=email, tenant=tenant).first()
-    
-    if invite:
-        if invite.used_at:
-            results.append({'email': email, 'status': 'Skipped (Already Used)', 'link': ''})
+def _process_csv_email(raw_email, tenant, request, results, summary):
+    try:
+        email = raw_email.strip().lower()
+        if not email:
+            return
+        
+        logger.info(f"Processing bulk invite for: {email} (Tenant: {tenant.name})")
+        
+        # Deduce the host cleanly (e.g. stripping existing subdomains or 'www.')
+        base_host = request.get_host()
+        if base_host.startswith('www.'):
+            base_host = base_host[4:]
+        for t in Tenant.objects.all():
+            if base_host.startswith(t.subdomain + '.'):
+                base_host = base_host[len(t.subdomain)+1:]
+                break
+                
+        invite = Invite.objects.filter(email=email, tenant=tenant).first()
+        
+        if invite:
+            if invite.used_at:
+                logger.info(f" -> Skipped (Already registered)")
+                results.append({'email': email, 'status': 'Skipped (Already Used)', 'link': ''})
+                summary['skipped'] += 1
+            else:
+                # Refresh token for unused invites
+                invite.token = uuid.uuid4()
+                invite.save()
+                link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
+                logger.info(f" -> Refreshed existing token")
+                results.append({'email': email, 'status': 'Refreshed', 'link': link})
+                summary['refreshed'] += 1
         else:
-            # Refresh token for unused invites
-            invite.token = uuid.uuid4()
-            invite.save()
+            invite = Invite.objects.create(email=email, tenant=tenant)
             link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
-            results.append({'email': email, 'status': 'Refreshed', 'link': link})
-    else:
-        invite = Invite.objects.create(email=email, tenant=tenant)
-        link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
-        results.append({'email': email, 'status': 'Created', 'link': link})
+            logger.info(f" -> Created successfully")
+            results.append({'email': email, 'status': 'Created', 'link': link})
+            summary['created'] += 1
+    except Exception as e:
+        logger.error(f"Error processing invite for {raw_email}: {str(e)}")
+        results.append({'email': raw_email, 'status': f'Error: {str(e)}', 'link': ''})
+        summary['errors'] += 1
