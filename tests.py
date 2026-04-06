@@ -43,7 +43,7 @@ class DepartmentTests(TestCase):
         self.client.login(username='testuser', password='password123')
         
         # Get the page
-        response = self.client.get(reverse('department_detail', args=[self.department.id]))
+        response = self.client.get(reverse('department_detail', args=[self.department.id]), HTTP_HOST='localhost:8000')
         
         # Check if status code is 200 (OK)
         self.assertEqual(response.status_code, 200)
@@ -61,8 +61,8 @@ class DepartmentTests(TestCase):
         
         # Simulate posting a correct answer
         response = self.client.post(reverse('take_department_quiz', args=[self.department.id]), {
-            f'question_{self.question.id}': '2'  # Correct option
-        })
+            f'question_{self.question.id}': '2'
+        }, HTTP_HOST='localhost:8000')
         
         # Check if result was saved
         result = QuizResult.objects.filter(user=self.user, department=self.department).first()

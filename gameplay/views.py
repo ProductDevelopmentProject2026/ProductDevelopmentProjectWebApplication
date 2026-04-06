@@ -374,55 +374,47 @@ def register_page(request):
     except ValidationError:
         invite = None
 
-    if invite:
-        request.tenant = invite.tenant
-        set_current_tenant(invite.tenant)
+    if not invite:
+        messages.error(request, "Invalid or expired invitation.")
+        if 'invite_token' in request.session:
+            del request.session['invite_token']
+        return redirect('login')
+
+    # Force the tenant context to match the invite for form rendering and validation
+    request.tenant = invite.tenant
+    set_current_tenant(invite.tenant)
 
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
 
         if form.is_valid():
-            if not invite:
-                form.add_error(None, "Invitation required or invalid")
+            try:
+                user = form.save(commit=False)
+                user.save()
+
+                selected_dept = form.cleaned_data.get('department')
+                user.profile.department = selected_dept
+                user.profile.tenant = invite.tenant
+                user.profile.save()
+
+                invite.used_at = timezone.now()
+                invite.save()
+
                 if 'invite_token' in request.session:
                     del request.session['invite_token']
-            else:
-                try:
-                    user = form.save(commit=False)
-                    user.save()
 
-                    selected_dept = form.cleaned_data.get('department')
-                    user.profile.department = selected_dept
-                    user.profile.tenant = invite.tenant
-                    user.profile.save()
-
-                    invite.used_at = timezone.now()
-                    invite.save()
-
-                    if 'invite_token' in request.session:
-                        del request.session['invite_token']
-
-                    messages.success(request, "Registration successful! You are now logged in.")
-                    login(request, user)
-                    return redirect('dashboard')
-                except Exception as e:
-                    logger.error(f"Registration failed due to exception: {str(e)}")
-                    form.add_error(None, f"An error occurred during registration: {str(e)}")
+                messages.success(request, "Registration successful! You are now logged in.")
+                login(request, user)
+                return redirect('dashboard')
+            except Exception as e:
+                logger.error(f"Registration failed due to exception: {str(e)}")
+                form.add_error(None, f"An error occurred during registration: {str(e)}")
         else:
             logger.error(f"Registration form validation failed: {form.errors}")
-            if not invite:
-                form.add_error(None, "Invitation required or invalid")
-                if 'invite_token' in request.session:
-                    del request.session['invite_token']
 
     else:
-        if invite:
-            request.session['invite_token'] = str(invite.token)
-            form = UserRegisterForm(initial={'email': invite.email})
-        else:
-            form = UserRegisterForm()
-            if 'invite_token' in request.session:
-                del request.session['invite_token']
+        request.session['invite_token'] = str(invite.token)
+        form = UserRegisterForm(initial={'email': invite.email})
 
     return render(request, 'gameplay/register.html', {'form': form, 'token': token})
 

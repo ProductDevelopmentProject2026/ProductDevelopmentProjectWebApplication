@@ -27,7 +27,8 @@ class TenantMiddleware:
         if not tenant:
             host = request.get_host().split(':')[0]
             subdomain = host.split('.')[0]
-            if subdomain and subdomain not in ['www', 'localhost', '127']:
+            # Added testserver to prevent Django's default test client from triggering a 404
+            if subdomain and subdomain not in ['www', 'localhost', '127', 'testserver']:
                 tenant = Tenant.objects.filter(subdomain=subdomain).first()
                 if not tenant:
                     raise Http404("Organization not found.")
@@ -38,6 +39,13 @@ class TenantMiddleware:
             if not tenant:
                 # If the 'default' tenant was renamed or deleted, safely fallback to the first available
                 tenant = Tenant.objects.first()
+            
+            if not tenant:
+                # Provide a default tenant in test DB setup or fresh installations
+                tenant, _ = Tenant.objects.get_or_create(
+                    subdomain='default',
+                    defaults={'name': 'Default Organization'}
+                )
 
         # 4) Enforce strict user-tenant isolation (superusers bypass this)
         if tenant and hasattr(request, 'user') and request.user.is_authenticated and not request.user.is_superuser:

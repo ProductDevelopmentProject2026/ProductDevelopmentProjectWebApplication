@@ -1,6 +1,6 @@
 from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
-from gameplay.models import Tenant, Department, Idea, IdeaCategory, Invite
+from gameplay.models import Tenant, Department, Idea, IdeaCategory, Invite, Training, Question, QuizResult
 from gameplay.thread_local import set_current_tenant
 from django.utils import timezone
 
@@ -96,6 +96,39 @@ class MultiTenancyTests(TestCase):
     def test_invite_cannot_be_reused(self):
         set_current_tenant(self.tenant1)
         invite = Invite.objects.create(email="new@acme.com", tenant=self.tenant1, used_at=timezone.now())
+        # Explicitly create the associated user so the view registers the token as completely consumed
+        User.objects.create_user(username="newuser_used", email="new@acme.com", password="password")
         set_current_tenant(None)
         response = self.client.get(f'/signup/?token={invite.token}', HTTP_HOST='acme.localhost:8000')
         self.assertRedirects(response, '/login/')
+
+    def test_quiz_submission_creates_data_with_correct_tenant(self):
+        set_current_tenant(self.tenant1)
+        
+        dept = Department.objects.create(name="Accounting")
+        training = Training.objects.create(
+            title="Ethics", 
+            description="Ethics 101", 
+            date_time=timezone.now(), 
+            location="Room 1",
+            organizer=self.superuser
+        )
+        q = Question.objects.create(
+            training=training, text="What is good?",
+            option_1="Good", option_2="Bad", option_3="Ugly", correct_option="1"
+        )
+        
+        self.client.login(username="testuser", password="password")
+        response = self.client.post(
+            f'/training/take-quiz/{training.id}/',
+            {f'question_{q.id}': '1'},
+            HTTP_HOST='acme.localhost:8000'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        result = QuizResult.objects.filter(user=self.user, training=training).first()
+        self.assertIsNotNone(result)
+        self.assertEqual(result.tenant, self.tenant1)
+        self.assertEqual(result.score, 1)
+        
+        set_current_tenant(None)

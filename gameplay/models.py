@@ -35,7 +35,10 @@ class TenantAwareModel(models.Model):
             tenant = get_current_tenant()
             if not tenant:
                 # Fallback for management commands, shell, or background tasks
-                tenant = Tenant.objects.filter(subdomain='default').first()
+                tenant, _ = Tenant.objects.get_or_create(
+                    subdomain='default',
+                    defaults={'name': 'Default Organization'}
+                )
             if tenant:
                 self.tenant = tenant
         super().save(*args, **kwargs)
