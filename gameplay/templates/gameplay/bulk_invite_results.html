@@ -1,0 +1,57 @@
+{% extends 'gameplay/base.html' %}
+
+{% block content %}
+<div class="card" style="margin: 20px auto; border-top: 5px solid #2ecc71;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px;">
+        <h2 style="margin: 0;">✅ Invite Links for {{ tenant.name }}</h2>
+        <button onclick="downloadCSV()" style="background: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+            Download as CSV
+        </button>
+    </div>
+    
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left;">
+        <thead>
+            <tr style="background: #f8f9fa;">
+                <th style="padding: 12px; border-bottom: 2px solid #ddd;">Email</th>
+                <th style="padding: 12px; border-bottom: 2px solid #ddd;">Status</th>
+                <th style="padding: 12px; border-bottom: 2px solid #ddd;">Invite Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px;">{{ result.email }}</td>
+                    <td style="padding: 12px;">
+                        {% if result.status == 'Created' %}
+                            <span style="color: #27ae60; font-weight: bold;">{{ result.status }}</span>
+                        {% elif result.status == 'Refreshed' %}
+                            <span style="color: #f39c12; font-weight: bold;">{{ result.status }}</span>
+                        {% else %}
+                            <span style="color: #c0392b; font-weight: bold;">{{ result.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px;">
+                        {% if result.link %}
+                            <input type="text" value="{{ result.link }}" readonly style="width: 100%; padding: 6px; border: 1px solid #ccc; background: #f9f9f9; color: #555; border-radius: 3px;" onclick="this.select();">
+                        {% else %}
+                            <em style="color: #aaa;">N/A</em>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function downloadCSV() {
+    let csv = "Email,Status,Link\n";
+    {% for r in results %}csv += `"{{ r.email }}","{{ r.status }}","{{ r.link }}"\n`;{% endfor %}
+    let blob = new Blob([csv], { type: 'text/csv' });
+    let a = document.createElement('a');
+    a.href = window.URL.createObjectURL(blob);
+    a.download = "tenant_invites_{{ tenant.subdomain }}.csv";
+    a.click();
+}
+</script>
+{% endblock %}

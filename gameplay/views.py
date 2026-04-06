@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg, Q
-from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, Invite
+from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, Invite, Tenant
 from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm        
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -10,6 +10,10 @@ from django.contrib import messages
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from .thread_local import set_current_tenant
+from django.contrib.admin.views.decorators import staff_member_required
+import csv
+import io
+import uuid
 import logging
 
 logger = logging.getLogger(__name__)
@@ -355,56 +359,70 @@ def take_quiz(request, training_id):
 # 9. Registration Page
 def register_page(request):
     token = request.GET.get('token') or request.POST.get('token') or request.session.get('invite_token')
-    if not token:
-        messages.error(request, "Invitation required to register.")
-        return render(request, 'gameplay/register.html', {'form': UserRegisterForm()})
-        
+
     try:
-        invite = Invite.objects.filter(token=token, used_at__isnull=True).first()
+        if token:
+            invite = Invite._base_manager.filter(token=token).first()
+            
+            # If invite is marked as used, verify if the user actually exists
+            if invite and invite.used_at:
+                from django.contrib.auth.models import User
+                if User.objects.filter(email=invite.email).exists():
+                    invite = None  # Truly used, block access
+        else:
+            invite = None
     except ValidationError:
         invite = None
-        
-    if not invite:
-        messages.error(request, "Invalid or expired invitation.")
-        if 'invite_token' in request.session:
-            del request.session['invite_token']
-        return render(request, 'gameplay/register.html', {'form': UserRegisterForm()})
 
-    # Force the tenant context to match the invite for form rendering and validation
-    request.tenant = invite.tenant
-    set_current_tenant(invite.tenant)
+    if invite:
+        request.tenant = invite.tenant
+        set_current_tenant(invite.tenant)
 
     if request.method == 'POST':
-        form = UserRegisterForm(request.POST) 
-        if form.is_valid():
-            try:
-                # Explicitly save the user object to the database first
-                user = form.save(commit=False) 
-                user.save()
-                
-                selected_dept = form.cleaned_data.get('department')
-                user.profile.department = selected_dept
-                user.profile.tenant = invite.tenant
-                user.profile.save()
+        form = UserRegisterForm(request.POST)
 
-                # Only mark the invite as used AFTER the user and profile are securely saved
-                invite.used_at = timezone.now()
-                invite.save()
+        if form.is_valid():
+            if not invite:
+                form.add_error(None, "Invitation required or invalid")
+                if 'invite_token' in request.session:
+                    del request.session['invite_token']
+            else:
+                try:
+                    user = form.save(commit=False)
+                    user.save()
+
+                    selected_dept = form.cleaned_data.get('department')
+                    user.profile.department = selected_dept
+                    user.profile.tenant = invite.tenant
+                    user.profile.save()
+
+                    invite.used_at = timezone.now()
+                    invite.save()
+
+                    if 'invite_token' in request.session:
+                        del request.session['invite_token']
+
+                    messages.success(request, "Registration successful! You are now logged in.")
+                    login(request, user)
+                    return redirect('dashboard')
+                except Exception as e:
+                    logger.error(f"Registration failed due to exception: {str(e)}")
+                    form.add_error(None, f"An error occurred during registration: {str(e)}")
+        else:
+            logger.error(f"Registration form validation failed: {form.errors}")
+            if not invite:
+                form.add_error(None, "Invitation required or invalid")
                 if 'invite_token' in request.session:
                     del request.session['invite_token']
 
-                messages.success(request, "Registration successful! You are now logged in.")
-                login(request, user)
-                return redirect('dashboard')
-            except Exception as e:
-                logger.error(f"Registration failed due to exception: {str(e)}")
-                messages.error(request, f"An error occurred during registration: {str(e)}")
-        else:
-            logger.error(f"Registration form validation failed: {form.errors}")
-            messages.error(request, "Registration failed. Please correct the errors below.")
     else:
-        request.session['invite_token'] = str(invite.token)
-        form = UserRegisterForm(initial={'email': invite.email})
+        if invite:
+            request.session['invite_token'] = str(invite.token)
+            form = UserRegisterForm(initial={'email': invite.email})
+        else:
+            form = UserRegisterForm()
+            if 'invite_token' in request.session:
+                del request.session['invite_token']
 
     return render(request, 'gameplay/register.html', {'form': form, 'token': token})
 
@@ -778,3 +796,84 @@ def redeem_page(request):
         return redirect('redeem_page')
         
     return render(request, 'gameplay/redeem.html', {'profile': request.user.profile})
+
+# 20. Admin Bulk Invite Upload
+@staff_member_required
+def bulk_invite_upload(request):
+    if request.method == 'POST':
+        tenant_id = request.POST.get('tenant')
+        csv_file = request.FILES.get('csv_file')
+        
+        if not tenant_id or not csv_file:
+            messages.error(request, "Please select an organization and upload a CSV file.")
+            return redirect('admin:gameplay_invite_bulk')
+            
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, "The uploaded file is not a valid CSV.")
+            return redirect('admin:gameplay_invite_bulk')
+        
+        tenant = get_object_or_404(Tenant, pk=tenant_id)
+        
+        try:
+            decoded_file = csv_file.read().decode('utf-8-sig')
+            reader = csv.reader(io.StringIO(decoded_file))
+        except Exception as e:
+            messages.error(request, f"Error reading CSV file: {e}")
+            return redirect('admin:gameplay_invite_bulk')
+        
+        results = []
+        header = next(reader, None)
+        
+        if not header:
+            messages.error(request, "The CSV file is empty.")
+            return redirect('admin:gameplay_invite_bulk')
+        
+        email_idx = 0
+        lower_header = [str(h).strip().lower() for h in header]
+        if 'email' in lower_header:
+            email_idx = lower_header.index('email')
+        else:
+            # If there's no header row, process the very first row as data
+            _process_csv_email(header[email_idx], tenant, request, results)
+        
+        for row in reader:
+            if row and len(row) > email_idx:
+                _process_csv_email(row[email_idx], tenant, request, results)
+                
+        return render(request, 'gameplay/bulk_invite_results.html', {
+            'results': results, 
+            'tenant': tenant
+        })
+    
+    tenants = Tenant.objects.all().order_by('name')
+    return render(request, 'gameplay/bulk_invite.html', {'tenants': tenants})
+
+def _process_csv_email(raw_email, tenant, request, results):
+    email = raw_email.strip().lower()
+    if not email:
+        return
+    
+    # Deduce the host cleanly (e.g. stripping existing subdomains or 'www.')
+    base_host = request.get_host()
+    if base_host.startswith('www.'):
+        base_host = base_host[4:]
+    for t in Tenant.objects.all():
+        if base_host.startswith(t.subdomain + '.'):
+            base_host = base_host[len(t.subdomain)+1:]
+            break
+            
+    invite = Invite.objects.filter(email=email, tenant=tenant).first()
+    
+    if invite:
+        if invite.used_at:
+            results.append({'email': email, 'status': 'Skipped (Already Used)', 'link': ''})
+        else:
+            # Refresh token for unused invites
+            invite.token = uuid.uuid4()
+            invite.save()
+            link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
+            results.append({'email': email, 'status': 'Refreshed', 'link': link})
+    else:
+        invite = Invite.objects.create(email=email, tenant=tenant)
+        link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
+        results.append({'email': email, 'status': 'Created', 'link': link})

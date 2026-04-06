@@ -1,0 +1,31 @@
+{% extends 'gameplay/base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 50px auto; border-top: 5px solid #8e44ad;">
+    <h2 style="text-align: center;">📨 Bulk Invite Upload</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">Select Organization:</label>
+            <select name="tenant" required style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
+                <option value="">-- Choose Tenant --</option>
+                {% for t in tenants %}
+                    <option value="{{ t.id }}">{{ t.name }} ({{ t.subdomain }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">CSV File:</label>
+            <input type="file" name="csv_file" accept=".csv" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;">
+            <small style="color: #666; display: block; margin-top: 8px;">Your CSV must contain either one email per line, or include a column header strictly named <strong>email</strong>.</small>
+        </div>
+
+        <button type="submit" style="background: #8e44ad; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-size: 1.1em; cursor: pointer; font-weight: bold;">
+            Upload & Generate Links
+        </button>
+    </form>
+</div>
+{% endblock %}

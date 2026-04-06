@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.urls import path
+from .views import bulk_invite_upload
 from .models import Tenant, Department, Profile, ActionLog, IdeaCategory, Idea, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, TenantAwareModel, Invite
 
 class TenantAwareAdmin(admin.ModelAdmin):
@@ -41,6 +43,13 @@ class InviteAdmin(TenantAwareAdmin):
     exclude = () # Ensure the tenant field is visible for invites
     list_display = ('email', 'tenant', 'token', 'used_at', 'created_at')
     list_filter = ('tenant', 'used_at', 'created_at')
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('bulk/', self.admin_site.admin_view(bulk_invite_upload), name='gameplay_invite_bulk'),
+        ]
+        return custom_urls + urls
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
