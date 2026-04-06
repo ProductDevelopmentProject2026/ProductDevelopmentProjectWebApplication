@@ -18,6 +18,9 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=lambda v: [s.strip() for s in v.split(',')])
 
+if DEBUG:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.localhost', '*']
+
 
 # Application definition
 
@@ -40,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'gameplay.middleware.TenantMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -54,6 +58,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'gameplay.context_processors.tenants_processor',
             ],
         },
     },

@@ -7,9 +7,20 @@
     <form method="post">
         {% csrf_token %}
 
-        {% if form.non_field_errors %}
-            <div style="background-color: #fee2e2; color: #dc2626; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                {{ form.non_field_errors }}
+        {% if form.errors %}
+            <div style="background-color: #fee2e2; color: #dc2626; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #fca5a5;">
+                <strong style="display: block; margin-bottom: 10px;">Please correct the following errors:</strong>
+                <ul style="margin: 0; padding-left: 20px;">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
             </div>
         {% endif %}
         

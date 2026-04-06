@@ -25,6 +25,7 @@ urlpatterns = [
     path('training/add-quiz/<int:training_id>/', add_question, name='add_question'),
     path('training/take-quiz/<int:training_id>/', take_quiz, name='take_quiz'),
     path('register/', register_page, name='register'),
+    path('signup/', register_page, name='signup'),
     path('redeem/', redeem_page, name='redeem_page'),
     path('training/<int:training_id>/lessons/', manage_lessons, name='manage_lessons'),
     path('lesson/<int:lesson_id>/', view_lesson, name='view_lesson'),

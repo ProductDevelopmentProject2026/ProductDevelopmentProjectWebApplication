@@ -25,6 +25,15 @@
         <a href="{% url 'problems_page' %}">Problems</a> 
         <a href="{% url 'redeem_page' %}" style="color: #f39c12;">Rewards</a>
         
+        {% if user.is_superuser %}
+        <select id="tenantSwitcher" style="margin-left: 20px; padding: 5px; border-radius: 4px; background: #34495e; color: white; border: 1px solid #2c3e50;">
+            <option value="">-- Select Organization --</option>
+            {% for tenant in tenants %}
+                <option value="{{ tenant.subdomain }}" {% if active_tenant and active_tenant.id == tenant.id %}selected{% endif %}>{{ tenant.name }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        
         {% if user.is_authenticated %}
             <form action="{% url 'logout' %}" method="post" style="display: inline; float: right;">
                 {% csrf_token %}
@@ -33,7 +42,7 @@
             <a href="{% url 'profile_page' %}" style="float: right;">👤 Profile</a>
         {% else %}
             <a href="{% url 'login' %}" style="float: right;">Login</a>
-            <a href="{% url 'register' %}" style="float: right; margin-right: 20px;">Register</a>
+            <a href="{% url 'signup' %}" style="float: right; margin-right: 20px;">Sign Up</a>
         {% endif %}
         
         <div style="clear: both;"></div>
@@ -42,5 +51,35 @@
     {% block content %}
     {% endblock %}
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const switcher = document.getElementById('tenantSwitcher');
+            if (!switcher) return;
+
+            // Handle user switching tenant manually
+            switcher.addEventListener('change', function(e) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('tenant', e.target.value);
+                window.location.href = url.toString();
+            });
+        });
+
+        // Intercept native fetch API to append headers
+        const originalFetch = window.fetch;
+        window.fetch = async function() {
+            let [resource, config] = arguments;
+            const activeTenantId = "{{ active_tenant.id|default:'' }}";
+            
+            if (activeTenantId) {
+                if (!config) config = {};
+                if (!config.headers) config.headers = {};
+                
+                // Only inject if it's an object (handles Headers object wrapping if needed)
+                if (config.headers instanceof Headers) config.headers.append('X-Tenant-Id', activeTenantId);
+                else config.headers['X-Tenant-Id'] = activeTenantId;
+            }
+            return await originalFetch(resource, config);
+        };
+    </script>
 </body>
 </html>

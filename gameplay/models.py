@@ -3,9 +3,57 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from .thread_local import get_current_tenant
+import uuid
+
+class Tenant(models.Model):
+    name = models.CharField(max_length=100)
+    subdomain = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class TenantManager(models.Manager):
+    def get_queryset(self):
+        qs = super().get_queryset()
+        tenant = get_current_tenant()
+        if tenant:
+            qs = qs.filter(tenant=tenant)
+        return qs
+
+class TenantAwareModel(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+
+    objects = TenantManager()
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self.tenant_id:
+            tenant = get_current_tenant()
+            if not tenant:
+                # Fallback for management commands, shell, or background tasks
+                tenant = Tenant.objects.filter(subdomain='default').first()
+            if tenant:
+                self.tenant = tenant
+        super().save(*args, **kwargs)
+
+class Invite(TenantAwareModel):
+    email = models.EmailField()
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('tenant', 'email')
+
+    def __str__(self):
+        return f"{self.email} ({self.tenant.name})"
 
 # 1. Departments for the "Battle" (Logistics vs Accounting)
-class Department(models.Model):
+class Department(TenantAwareModel):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, help_text="What does this team do?")
     video_url = models.URLField(blank=True, null=True, help_text="YouTube intro video")
@@ -13,10 +61,13 @@ class Department(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        unique_together = ('tenant', 'name')
+
 # 2. Employee Profile to track their Department
-class Profile(models.Model):
+class Profile(TenantAwareModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     total_score = models.IntegerField(default=0)
     bonus_euros = models.IntegerField(default=0)
 
@@ -27,10 +78,10 @@ class Profile(models.Model):
     def total_problems_solved(self):
         """Calculates total problems this user helped solve, which are confirmed by the submitter."""
         # Find problems where this user is the "claimed_by" and the original submitter confirmed "is_solved=True"
-        return Problem.objects.filter(claimed_by=self.user, is_solved=True).count()
+        return Problem.objects.filter(claimed_by=self.user, is_solved=True, tenant=self.tenant).count()
 
 # 3. To track actions like "Safety Test" or "Kilometers"
-class ActionLog(models.Model):
+class ActionLog(TenantAwareModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     action_name = models.CharField(max_length=200) # e.g. "Passed Safety Test"
     points = models.IntegerField(default=10)
@@ -39,15 +90,18 @@ class ActionLog(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.action_name} (+{self.points})"
 
-class IdeaCategory(models.Model):
+class IdeaCategory(TenantAwareModel):
     name = models.CharField(max_length=100)
     keywords = models.TextField(help_text="Comma-separated keywords for auto-identification")
 
     def __str__(self):
         return self.name
 
+    class Meta:
+        unique_together = ('tenant', 'name')
+
 # 4. For the "Ideas Marathon" (Kaizen)
-class Idea(models.Model):
+class Idea(TenantAwareModel):
     title = models.CharField(max_length=200)
     description = models.TextField()
     submitted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -61,7 +115,7 @@ class Idea(models.Model):
     def __str__(self):
         return self.title
     
-class Training(models.Model):
+class Training(TenantAwareModel):
     title = models.CharField(max_length=200)
     description = models.TextField()
     date_time = models.DateTimeField()
@@ -76,7 +130,10 @@ class Training(models.Model):
     def __str__(self):
         return self.title
 
-class Question(models.Model):
+    class Meta:
+        unique_together = ('tenant', 'title')
+
+class Question(TenantAwareModel):
     training = models.ForeignKey(Training, on_delete=models.CASCADE, related_name='questions', null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='questions', null=True, blank=True)
     
@@ -89,7 +146,7 @@ class Question(models.Model):
     def __str__(self):
         return self.text
 
-class QuizResult(models.Model):
+class QuizResult(TenantAwareModel):
     training = models.ForeignKey(Training, on_delete=models.CASCADE, null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True)
     
@@ -109,7 +166,7 @@ def save_user_profile(sender, instance, **kwargs):
     except Profile.DoesNotExist:
         Profile.objects.create(user=instance)
 
-class Lesson(models.Model):
+class Lesson(TenantAwareModel):
     training = models.ForeignKey(Training, on_delete=models.CASCADE, related_name='lessons')
     title = models.CharField(max_length=200)
     content = models.TextField(blank=True, help_text="Main text for the lesson")
@@ -123,11 +180,7 @@ class Lesson(models.Model):
     def __str__(self):
         return f"{self.training.title} - {self.order}. {self.title}"
 
-class Nikita(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100)
-
-class TrainingFeedback(models.Model):
+class TrainingFeedback(TenantAwareModel):
     training = models.ForeignKey(Training, on_delete=models.CASCADE, related_name='feedbacks')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField(default=5) 
@@ -137,7 +190,7 @@ class TrainingFeedback(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.training.title} ({self.rating} Stars)"
 
-class Problem(models.Model):
+class Problem(TenantAwareModel):
     description = models.TextField()
     submitted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_problems')
     submitted_at = models.DateTimeField(auto_now_add=True)

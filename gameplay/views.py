@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg, Q
-from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem
+from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, Invite
 from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm        
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -8,13 +8,22 @@ import re
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from .thread_local import set_current_tenant
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 1. Home Page (Welcome)
 @login_required
 def dashboard(request):
-    departments = Department.objects.annotate(
-        points=Sum('profile__total_score')
-    ).order_by('-points')
+    if not request.tenant:
+        messages.info(request, "Please select an organization from the dropdown above to view the dashboard.")
+        departments = Department.objects.none()
+    else:
+        departments = Department.objects.filter(tenant=request.tenant).annotate(
+            points=Sum('profile__total_score')
+        ).order_by('-points')
 
     dept_data = []
     for dept in departments:
@@ -61,23 +70,32 @@ def dashboard(request):
 
 # 2. Departments Page
 def departments_page(request):
-    all_departments = Department.objects.annotate(
-        total_points=Sum('profile__total_score')
-    ).order_by('-total_points')
+    if not request.tenant:
+        messages.info(request, "Please select an organization to view departments.")
+        all_departments = Department.objects.none()
+    else:
+        all_departments = Department.objects.filter(tenant=request.tenant).annotate(
+            total_points=Sum('profile__total_score')
+        ).order_by('-total_points')
     
     return render(request, 'gameplay/departments.html', {'departments': all_departments})
 
 # 3. Ideas Page (Form + List)
 def ideas_page(request):
     if request.method == 'POST':
+        if not request.tenant:
+            messages.error(request, "You must select an organization first.")
+            return redirect('ideas_page')
+            
         form = IdeaForm(request.POST)
         if form.is_valid():
             new_idea = form.save(commit=False)
             new_idea.submitted_by = request.user
+            new_idea.tenant = request.tenant
             
             # Auto-categorization logic
             text_to_search = (new_idea.title + " " + new_idea.description).lower()
-            categories = IdeaCategory.objects.all()
+            categories = IdeaCategory.objects.filter(tenant=request.tenant)
             for cat in categories:
                 kws = [k.strip().lower() for k in cat.keywords.split(',')]
                 if any(kw in text_to_search for kw in kws if kw):
@@ -91,11 +109,15 @@ def ideas_page(request):
 
     search_query = request.GET.get('q', '')
 
-    if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.department:
-        user_dept = request.user.profile.department
-        pending_ideas = Idea.objects.exclude(accepted_by=user_dept)
+    if not request.tenant:
+        messages.info(request, "Please select an organization to view ideas.")
+        pending_ideas = Idea.objects.none()
     else:
-        pending_ideas = Idea.objects.all()
+        if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.department:
+            user_dept = request.user.profile.department
+            pending_ideas = Idea.objects.filter(tenant=request.tenant).exclude(accepted_by=user_dept)
+        else:
+            pending_ideas = Idea.objects.filter(tenant=request.tenant)
 
     if search_query:
         pending_ideas = pending_ideas.filter(
@@ -104,7 +126,11 @@ def ideas_page(request):
 
     pending_ideas = pending_ideas.annotate(num_votes=Count('voters')).order_by('title')
 
-    categories = IdeaCategory.objects.all()
+    if not request.tenant:
+        categories = IdeaCategory.objects.none()
+    else:
+        categories = IdeaCategory.objects.filter(tenant=request.tenant)
+        
     categorized_ideas = []
     
     for cat in categories:
@@ -133,7 +159,7 @@ def ideas_page(request):
 
 # 4. Voting Logic
 def vote_idea(request, idea_id):
-    idea = get_object_or_404(Idea, pk=idea_id)
+    idea = get_object_or_404(Idea, pk=idea_id, tenant=request.tenant)
     if request.user.is_authenticated:
         if request.user in idea.voters.all():
             idea.voters.remove(request.user)
@@ -144,12 +170,19 @@ def vote_idea(request, idea_id):
 @login_required
 def profile_page(request):
     user_profile = get_object_or_404(Profile, user=request.user)
-    my_ideas = Idea.objects.filter(submitted_by=request.user).order_by('title')
+    
+    if not request.tenant:
+        messages.info(request, "Please select an organization to view your profile data.")
+        my_ideas = Idea.objects.none()
+        my_trainings = Training.objects.none()
+    else:
+        my_ideas = Idea.objects.filter(submitted_by=request.user, tenant=request.tenant).order_by('title')
+        my_trainings = Training.objects.filter(organizer=request.user, tenant=request.tenant).order_by('title')
+        
     accepted_ideas_count = my_ideas.filter(accepted_by__isnull=False).distinct().count()
     pending_ideas_count = my_ideas.filter(accepted_by__isnull=True).count()
 
     # --- NEW: Training Analytics Logic ---
-    my_trainings = Training.objects.filter(organizer=request.user).order_by('title')
     training_stats = []
 
     for t in my_trainings:
@@ -179,10 +212,15 @@ def profile_page(request):
 # 5. Training Page (List + Create)
 def training_page(request):
     if request.method == 'POST':
+        if not request.tenant:
+            messages.error(request, "You must select an organization first.")
+            return redirect('training_page')
+            
         form = TrainingForm(request.POST, request.FILES)
         if form.is_valid():
             new_training = form.save(commit=False)
             new_training.organizer = request.user
+            new_training.tenant = request.tenant
             new_training.save()
             
             from django.contrib import messages
@@ -194,7 +232,11 @@ def training_page(request):
 
     search_query = request.GET.get('q', '')
 
-    trainings = Training.objects.all()
+    if not request.tenant:
+        messages.info(request, "Please select an organization to view trainings.")
+        trainings = Training.objects.none()
+    else:
+        trainings = Training.objects.filter(tenant=request.tenant)
 
     if search_query:
         trainings = trainings.filter(
@@ -212,7 +254,7 @@ def training_page(request):
 
 # 6. Registration Logic (Like Voting), (Updated with Department Block)
 def register_training(request, training_id):
-    training = get_object_or_404(Training, pk=training_id)
+    training = get_object_or_404(Training, pk=training_id, tenant=request.tenant)
 
     if request.user.is_authenticated:
         
@@ -234,7 +276,7 @@ def register_training(request, training_id):
 
 # 7. Organizer adds a question
 def add_question(request, training_id):
-    training = get_object_or_404(Training, pk=training_id)
+    training = get_object_or_404(Training, pk=training_id, tenant=request.tenant)
     
     # Security: Only the organizer can add questions
     if request.user != training.organizer:
@@ -245,6 +287,7 @@ def add_question(request, training_id):
         if form.is_valid():
             question = form.save(commit=False)
             question.training = training
+            question.tenant = request.tenant
             question.save()
             return redirect('add_question', training_id=training.id) # Reload to add another
     else:
@@ -261,7 +304,7 @@ def add_question(request, training_id):
 
 # 8. Attendees take the quiz
 def take_quiz(request, training_id):
-    training = get_object_or_404(Training, pk=training_id)
+    training = get_object_or_404(Training, pk=training_id, tenant=request.tenant)
     questions = training.questions.all()
 
     if request.method == 'POST':
@@ -296,7 +339,7 @@ def take_quiz(request, training_id):
                 training.organizer.profile.save()
 
         # Save result and give points
-        QuizResult.objects.create(training=training, user=request.user, score=score)
+        QuizResult.objects.create(training=training, user=request.user, score=score, tenant=request.tenant)
         request.user.profile.total_score += (score * 10)
         request.user.profile.save()
 
@@ -311,24 +354,63 @@ def take_quiz(request, training_id):
 
 # 9. Registration Page
 def register_page(request):
+    token = request.GET.get('token') or request.POST.get('token') or request.session.get('invite_token')
+    if not token:
+        messages.error(request, "Invitation required to register.")
+        return render(request, 'gameplay/register.html', {'form': UserRegisterForm()})
+        
+    try:
+        invite = Invite.objects.filter(token=token, used_at__isnull=True).first()
+    except ValidationError:
+        invite = None
+        
+    if not invite:
+        messages.error(request, "Invalid or expired invitation.")
+        if 'invite_token' in request.session:
+            del request.session['invite_token']
+        return render(request, 'gameplay/register.html', {'form': UserRegisterForm()})
+
+    # Force the tenant context to match the invite for form rendering and validation
+    request.tenant = invite.tenant
+    set_current_tenant(invite.tenant)
+
     if request.method == 'POST':
         form = UserRegisterForm(request.POST) 
         if form.is_valid():
-            user = form.save() 
-            selected_dept = form.cleaned_data.get('department')
-            user.profile.department = selected_dept
-            user.profile.save()
+            try:
+                # Explicitly save the user object to the database first
+                user = form.save(commit=False) 
+                user.save()
+                
+                selected_dept = form.cleaned_data.get('department')
+                user.profile.department = selected_dept
+                user.profile.tenant = invite.tenant
+                user.profile.save()
 
-            login(request, user)
-            return redirect('dashboard')
+                # Only mark the invite as used AFTER the user and profile are securely saved
+                invite.used_at = timezone.now()
+                invite.save()
+                if 'invite_token' in request.session:
+                    del request.session['invite_token']
+
+                messages.success(request, "Registration successful! You are now logged in.")
+                login(request, user)
+                return redirect('dashboard')
+            except Exception as e:
+                logger.error(f"Registration failed due to exception: {str(e)}")
+                messages.error(request, f"An error occurred during registration: {str(e)}")
+        else:
+            logger.error(f"Registration form validation failed: {form.errors}")
+            messages.error(request, "Registration failed. Please correct the errors below.")
     else:
-        form = UserRegisterForm()
+        request.session['invite_token'] = str(invite.token)
+        form = UserRegisterForm(initial={'email': invite.email})
 
-    return render(request, 'gameplay/register.html', {'form': form})
+    return render(request, 'gameplay/register.html', {'form': form, 'token': token})
 
 # 10. Organizer adds lessons to a training
 def manage_lessons(request, training_id):
-    training = get_object_or_404(Training, pk=training_id)
+    training = get_object_or_404(Training, pk=training_id, tenant=request.tenant)
     
     # Security: Only the organizer can manage lessons
     if request.user != training.organizer:
@@ -340,6 +422,7 @@ def manage_lessons(request, training_id):
         if form.is_valid():
             lesson = form.save(commit=False)
             lesson.training = training
+            lesson.tenant = request.tenant
             lesson.save()
             return redirect('manage_lessons', training_id=training.id)
     else:
@@ -354,7 +437,7 @@ def manage_lessons(request, training_id):
 
 # 11. Attendees view the actual lesson
 def view_lesson(request, lesson_id):
-    lesson = get_object_or_404(Lesson, pk=lesson_id)
+    lesson = get_object_or_404(Lesson, pk=lesson_id, tenant=request.tenant)
     training = lesson.training
     
     # Security: Must be registered to view
@@ -365,7 +448,7 @@ def view_lesson(request, lesson_id):
 
 # 12. Department Profile Page
 def department_detail(request, department_id):
-    department = get_object_or_404(Department, pk=department_id)
+    department = get_object_or_404(Department, pk=department_id, tenant=request.tenant)
     questions = department.questions.all()
     
     has_taken_quiz = QuizResult.objects.filter(user=request.user, department=department).exists()
@@ -384,7 +467,7 @@ def department_detail(request, department_id):
     accepted_ideas_count = department.installed_ideas.count()
     
     # Count how many total ideas exist that this department HAS NOT accepted yet
-    new_ideas_count = Idea.objects.exclude(accepted_by=department).count()
+    new_ideas_count = Idea.objects.filter(tenant=request.tenant).exclude(accepted_by=department).count()
 
     return render(request, 'gameplay/department_detail.html', {
         'department': department,
@@ -398,7 +481,7 @@ def department_detail(request, department_id):
 
 # 13. Add Questions to Department
 def add_department_question(request, department_id):
-    department = get_object_or_404(Department, pk=department_id)
+    department = get_object_or_404(Department, pk=department_id, tenant=request.tenant)
     
     # Only superusers (Admins) should edit department quizzes
     if not request.user.is_superuser:
@@ -409,6 +492,7 @@ def add_department_question(request, department_id):
         if form.is_valid():
             question = form.save(commit=False)
             question.department = department 
+            question.tenant = request.tenant
             question.save()
             return redirect('add_department_question', department_id=department.id)
     else:
@@ -422,7 +506,7 @@ def add_department_question(request, department_id):
 
 # 14. Take Department Quiz
 def take_department_quiz(request, department_id):
-    department = get_object_or_404(Department, pk=department_id)
+    department = get_object_or_404(Department, pk=department_id, tenant=request.tenant)
     questions = department.questions.all()
 
     # Prevent taking it twice
@@ -448,7 +532,7 @@ def take_department_quiz(request, department_id):
                 'is_correct': is_correct
             })
 
-        QuizResult.objects.create(department=department, user=request.user, score=score)
+        QuizResult.objects.create(department=department, user=request.user, score=score, tenant=request.tenant)
         
         # Give Points
         points_earned = score * 10
@@ -469,7 +553,11 @@ def take_department_quiz(request, department_id):
     })
 
 def campus_map(request):
-    departments = Department.objects.prefetch_related('question_set').all()
+    if not request.tenant:
+        messages.info(request, "Please select an organization to view the campus map.")
+        departments = Department.objects.none()
+    else:
+        departments = Department.objects.filter(tenant=request.tenant).prefetch_related('question_set')
 
     # Gather total points for each department
     dept_data = []
@@ -520,7 +608,7 @@ def accept_idea(request, idea_id):
         messages.error(request, "Only admins can approve ideas.")
         return redirect('ideas_page')
 
-    idea = get_object_or_404(Idea, pk=idea_id)
+    idea = get_object_or_404(Idea, pk=idea_id, tenant=request.tenant)
     
     # We check the Admin's department so we know WHO is accepting the idea
     if hasattr(request.user, 'profile') and request.user.profile.department:
@@ -544,7 +632,7 @@ def accept_idea(request, idea_id):
 @login_required
 def submit_feedback(request, training_id):
     if request.method == 'POST':
-        training = get_object_or_404(Training, pk=training_id)
+        training = get_object_or_404(Training, pk=training_id, tenant=request.tenant)
         rating = request.POST.get('rating')
         suggestions = request.POST.get('suggestions')
 
@@ -554,7 +642,8 @@ def submit_feedback(request, training_id):
                 training=training,
                 user=request.user,
                 rating=rating,
-                suggestions=suggestions
+                suggestions=suggestions,
+                tenant=request.tenant
             )
             messages.success(request, "Thank you! Your feedback has been sent to the organizer.")
             
@@ -565,10 +654,15 @@ def submit_feedback(request, training_id):
 @login_required
 def problems_page(request):
     if request.method == 'POST':
+        if not request.tenant:
+            messages.error(request, "You must select an organization first.")
+            return redirect('problems_page')
+            
         form = ProblemForm(request.POST)
         if form.is_valid():
             problem = form.save(commit=False)
             problem.submitted_by = request.user
+            problem.tenant = request.tenant
             problem.save()
             messages.success(request, "Your problem has been shared! A fellow employee might help solve it.")
             return redirect('problems_page')
@@ -576,7 +670,11 @@ def problems_page(request):
         form = ProblemForm()
 
     # List problems that are not yet confirmed solved, newest first
-    unsolved_problems = Problem.objects.filter(is_solved=False).order_by('-submitted_at')
+    if not request.tenant:
+        messages.info(request, "Please select an organization to view problems.")
+        unsolved_problems = Problem.objects.none()
+    else:
+        unsolved_problems = Problem.objects.filter(is_solved=False, tenant=request.tenant).order_by('-submitted_at')
     
     return render(request, 'gameplay/problems.html', {
         'form': form,
@@ -586,7 +684,7 @@ def problems_page(request):
 # 16. A helper claims they solved a problem
 @login_required
 def claim_solution(request, problem_id):
-    problem = get_object_or_404(Problem, pk=problem_id)
+    problem = get_object_or_404(Problem, pk=problem_id, tenant=request.tenant)
     
     if problem.submitted_by == request.user:
         messages.error(request, "You cannot solve your own problem!")
@@ -614,7 +712,7 @@ def claim_solution(request, problem_id):
 # 17. The submitter confirms the solution works (The big reward point view)
 @login_required
 def confirm_solved(request, problem_id):
-    problem = get_object_or_404(Problem, pk=problem_id)
+    problem = get_object_or_404(Problem, pk=problem_id, tenant=request.tenant)
     
     # Security: Only the original submitter can confirm the solution
     if problem.submitted_by != request.user:
@@ -643,13 +741,13 @@ def confirm_solved(request, problem_id):
     problem.solved_at = timezone.now()
     problem.save()
     
-    messages.success(request, f"Perfect! The problem is confirmed solved. +10 points 자동으로 added to {problem.claimed_by.username}'s profile!")
+    messages.success(request, f"Perfect! The problem is confirmed solved. +10 points added to {problem.claimed_by.username}'s profile!")
     return redirect('profile_page')
 
 # 18. Submitter rejects the solution
 @login_required
 def reject_solution(request, problem_id):
-    problem = get_object_or_404(Problem, pk=problem_id)
+    problem = get_object_or_404(Problem, pk=problem_id, tenant=request.tenant)
     
     if problem.submitted_by != request.user:
         messages.error(request, "Only the person who shared the problem can reject a solution.")
