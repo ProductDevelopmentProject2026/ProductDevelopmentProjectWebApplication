@@ -11,6 +11,8 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from .thread_local import set_current_tenant
 from django.contrib.admin.views.decorators import staff_member_required
+from django.conf import settings
+from django.core.mail import send_mail
 import csv
 import io
 import uuid
@@ -368,10 +370,18 @@ def register_page(request):
             if invite and invite.used_at:
                 from django.contrib.auth.models import User
                 if User.objects.filter(email=invite.email).exists():
+                    logger.warning(f"Registration blocked: Invite token '{token}' is already used by an existing user.")
                     invite = None  # Truly used, block access
+                else:
+                    logger.info(f"Token '{token}' used_at is set but user doesn't exist. Allowing registration.")
+            elif invite:
+                logger.info(f"Invite token '{token}' validated successfully.")
+            else:
+                logger.warning(f"Invite token '{token}' not found in database.")
         else:
             invite = None
     except ValidationError:
+        logger.warning(f"Invite token '{token}' failed validation.")
         invite = None
 
     if not invite:
@@ -390,12 +400,18 @@ def register_page(request):
         if form.is_valid():
             try:
                 user = form.save(commit=False)
+                # Need to manually set username as email since form uses AbstractUser
+                user.username = form.cleaned_data.get('email')
                 user.save()
+
+                logger.info(f"User created: {user.email} (ID: {user.id}) via token '{token}'")
 
                 selected_dept = form.cleaned_data.get('department')
                 user.profile.department = selected_dept
                 user.profile.tenant = invite.tenant
                 user.profile.save()
+
+                logger.info(f"Profile updated: Tenant '{invite.tenant.subdomain}' assigned.")
 
                 invite.used_at = timezone.now()
                 invite.save()
@@ -403,8 +419,13 @@ def register_page(request):
                 if 'invite_token' in request.session:
                     del request.session['invite_token']
 
-                messages.success(request, "Registration successful! You are now logged in.")
+                # Explicitly set backend so django does not drop the session over missing backend
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(request, user)
+                
+                logger.info(f"User {user.email} successfully authenticated. Redirecting to dashboard...")
+
+                messages.success(request, "Registration successful! You are now logged in.")
                 return redirect('dashboard')
             except Exception as e:
                 logger.error(f"Registration failed due to exception: {str(e)}")
@@ -815,7 +836,17 @@ def bulk_invite_upload(request):
             messages.error(request, f"Error reading file: {e}")
             return redirect('admin:gameplay_invite_bulk')
         
-        summary = {'created': 0, 'skipped': 0, 'refreshed': 0, 'errors': 0}
+        summary = {'created': 0, 'skipped': 0, 'refreshed': 0, 'errors': 0, 'emails_sent': 0, 'emails_failed': 0, 'email_error_details': []}
+        
+        if not getattr(settings, 'EMAIL_HOST', None) or not getattr(settings, 'EMAIL_HOST_USER', None) or not getattr(settings, 'EMAIL_HOST_PASSWORD', None):
+            summary['email_error'] = "Email settings (EMAIL_HOST / EMAIL_HOST_USER / EMAIL_HOST_PASSWORD) are missing. Emails will not be sent."
+            messages.error(request, "SMTP configuration is missing. Emails will not be sent.")
+        else:
+            logger.info(f"SMTP Config: HOST={getattr(settings, 'EMAIL_HOST', None)}, "
+                        f"PORT={getattr(settings, 'EMAIL_PORT', None)}, "
+                        f"TLS={getattr(settings, 'EMAIL_USE_TLS', None)}, "
+                        f"USER={getattr(settings, 'EMAIL_HOST_USER', None)}, "
+                        f"FROM={getattr(settings, 'DEFAULT_FROM_EMAIL', None)}")
         results = []
 
         if is_csv:
@@ -848,6 +879,10 @@ def bulk_invite_upload(request):
                 if line:
                     _process_csv_email(line, tenant, request, results, summary)
                 
+        if summary['emails_failed'] > 0:
+            err_details = " | ".join(summary['email_error_details'])
+            messages.error(request, f"{summary['emails_failed']} email(s) failed to send. Details: {err_details}")
+
         return render(request, 'gameplay/bulk_invite_results.html', {
             'results': results, 
             'summary': summary,
@@ -856,6 +891,21 @@ def bulk_invite_upload(request):
     
     tenants = Tenant.objects.all().order_by('name')
     return render(request, 'gameplay/bulk_invite.html', {'tenants': tenants})
+
+def _send_invite_email(email, tenant, link):
+    if not getattr(settings, 'EMAIL_HOST', None) or not getattr(settings, 'EMAIL_HOST_USER', None) or not getattr(settings, 'EMAIL_HOST_PASSWORD', None):
+        return False, "Missing SMTP configuration"
+        
+    subject = f"You're invited to join {tenant.name}"
+    message = f"You're invited to join {tenant.name}.\n\nPlease sign up using the following link:\n{link}"
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com')
+    try:
+        send_mail(subject, message, from_email, [email], fail_silently=False)
+        return True, None
+    except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
+        return False, str(e)
 
 def _process_csv_email(raw_email, tenant, request, results, summary):
     try:
@@ -886,15 +936,35 @@ def _process_csv_email(raw_email, tenant, request, results, summary):
                 invite.token = uuid.uuid4()
                 invite.save()
                 link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
-                logger.info(f" -> Refreshed existing token")
-                results.append({'email': email, 'status': 'Refreshed', 'link': link})
                 summary['refreshed'] += 1
+                
+                email_sent, email_err = _send_invite_email(email, tenant, link)
+                if email_sent:
+                    logger.info(f" -> Refreshed existing token and sent email")
+                    results.append({'email': email, 'status': 'Refreshed + Sent', 'link': link})
+                    summary['emails_sent'] += 1
+                else:
+                    logger.info(f" -> Refreshed existing token but email failed")
+                    results.append({'email': email, 'status': 'Refreshed + Failed', 'link': link})
+                    summary['emails_failed'] += 1
+                    if email_err and email_err not in summary['email_error_details']:
+                        summary['email_error_details'].append(email_err)
         else:
             invite = Invite.objects.create(email=email, tenant=tenant)
             link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
-            logger.info(f" -> Created successfully")
-            results.append({'email': email, 'status': 'Created', 'link': link})
             summary['created'] += 1
+            
+            email_sent, email_err = _send_invite_email(email, tenant, link)
+            if email_sent:
+                logger.info(f" -> Created successfully and sent email")
+                results.append({'email': email, 'status': 'Created + Sent', 'link': link})
+                summary['emails_sent'] += 1
+            else:
+                logger.info(f" -> Created successfully but email failed")
+                results.append({'email': email, 'status': 'Created + Failed', 'link': link})
+                summary['emails_failed'] += 1
+                if email_err and email_err not in summary['email_error_details']:
+                    summary['email_error_details'].append(email_err)
     except Exception as e:
         logger.error(f"Error processing invite for {raw_email}: {str(e)}")
         results.append({'email': raw_email, 'status': f'Error: {str(e)}', 'link': ''})
