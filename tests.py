@@ -2,10 +2,20 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 # absolute import to avoid "unknown parent package" errors
-from gameplay.models import Department, Question, QuizResult 
+from gameplay.models import Department, Question, QuizResult, Tenant 
+from gameplay.thread_local import set_current_tenant
 
 class DepartmentTests(TestCase):
     def setUp(self):
+        # Reset tenant state just in case another test left it dirty
+        set_current_tenant(None)
+        
+        self.tenant, _ = Tenant.objects.get_or_create(
+            subdomain='default',
+            defaults={'name': 'Default Organization'}
+        )
+        set_current_tenant(self.tenant)
+        
         # 1. Create a test user
         self.user = User.objects.create_user(username='testuser', password='password123')
         
@@ -13,7 +23,8 @@ class DepartmentTests(TestCase):
         self.department = Department.objects.create(
             name="IT Department",
             description="Tech support",
-            video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            tenant=self.tenant
         )
         
         # 3. Create a test question
@@ -23,8 +34,12 @@ class DepartmentTests(TestCase):
             option_1="Snake",
             option_2="Language",
             option_3="Car",
-            correct_option="2"
+            correct_option="2",
+            tenant=self.tenant
         )
+
+    def tearDown(self):
+        set_current_tenant(None)
 
     def test_department_model(self):
         """Test if department is created correctly"""

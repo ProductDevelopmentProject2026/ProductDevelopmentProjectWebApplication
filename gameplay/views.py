@@ -488,8 +488,8 @@ def register_page(request):
         logger.warning(f"Invite token '{token}' failed validation.")
         invite = None
 
-    if token and not invite:
-        messages.error(request, "Invalid or expired invitation.")
+    if not invite:
+        messages.error(request, "Invalid, expired, or missing invitation.")
         if 'invite_token' in request.session:
             del request.session['invite_token']
         return redirect('login')
