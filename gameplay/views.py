@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg, Q
 from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, Invite, Tenant
-from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm        
+from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm, EmployeeEditForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 import re  
@@ -19,6 +19,106 @@ import uuid
 import logging
 
 logger = logging.getLogger(__name__)
+
+# 0. Company Admin Dashboard
+@login_required
+def company_admin_dashboard(request):
+    if not request.tenant:
+        messages.info(request, "Please select an organization to view the admin panel.")
+        return redirect('dashboard')
+        
+    # Check if the user is the assigned admin for the tenant or a master admin
+    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
+    if not request.user.is_superuser and not is_tenant_admin:
+        messages.error(request, "You do not have permission to access the Company Admin dashboard.")
+        return redirect('dashboard')
+        
+    departments = Department.objects.filter(tenant=request.tenant).annotate(
+        points=Sum('profile__total_score')
+    ).order_by('-points')
+    
+    users = Profile.objects.filter(tenant=request.tenant).select_related('user', 'department')
+    trainings = Training.objects.filter(tenant=request.tenant)
+    
+    return render(request, 'gameplay/company_admin_dashboard.html', {
+        'tenant': request.tenant,
+        'departments': departments,
+        'users': users,
+        'trainings': trainings,
+    })
+
+@login_required
+def edit_employee_profile(request, profile_id):
+    if not request.tenant:
+        messages.info(request, "Please select an organization.")
+        return redirect('dashboard')
+    
+    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
+    if not request.user.is_superuser and not is_tenant_admin:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect('dashboard')
+
+    employee_profile = get_object_or_404(Profile, id=profile_id, tenant=request.tenant)
+    employee_user = employee_profile.user
+
+    if request.method == 'POST':
+        form = EmployeeEditForm(request.POST, instance=employee_user, tenant=request.tenant, profile=employee_profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Successfully updated profile for {employee_user.username}.")
+            return redirect('company_admin_dashboard')
+    else:
+        form = EmployeeEditForm(instance=employee_user, tenant=request.tenant, profile=employee_profile)
+
+    return render(request, 'gameplay/edit_employee_profile.html', {
+        'form': form,
+        'employee_profile': employee_profile,
+        'tenant': request.tenant,
+    })
+
+@login_required
+def edit_company(request):
+    if not request.tenant:
+        messages.error(request, "Please select an organization first.")
+        return redirect('dashboard')
+        
+    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
+    if not request.user.is_superuser and not is_tenant_admin:
+        messages.error(request, "You do not have permission.")
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        if name:
+            request.tenant.name = name
+            request.tenant.save()
+            messages.success(request, "Company details updated successfully.")
+            return redirect('company_admin_dashboard')
+            
+    return render(request, 'gameplay/edit_company.html', {'tenant': request.tenant})
+
+@login_required
+def edit_company_user(request, user_id):
+    if not request.tenant:
+        return redirect('dashboard')
+        
+    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
+    if not request.user.is_superuser and not is_tenant_admin:
+        messages.error(request, "You do not have permission.")
+        return redirect('dashboard')
+        
+    profile = get_object_or_404(Profile, user__id=user_id, tenant=request.tenant)
+    departments = Department.objects.filter(tenant=request.tenant)
+    
+    if request.method == 'POST':
+        dept_id = request.POST.get('department')
+        profile.department_id = dept_id if dept_id else None
+        profile.total_score = int(request.POST.get('points', profile.total_score))
+        profile.save()
+        messages.success(request, f"User {profile.user.username} updated successfully.")
+        return redirect('company_admin_dashboard')
+        
+    return render(request, 'gameplay/edit_company_user.html', {'profile': profile, 'departments': departments})
 
 # 1. Home Page (Welcome)
 @login_required
@@ -175,8 +275,12 @@ def vote_idea(request, idea_id):
 
 @login_required
 def profile_page(request):
-    user_profile = get_object_or_404(Profile, user=request.user)
-    
+    try:
+        user_profile = request.user.profile
+    except Profile.DoesNotExist:
+        # Fallback to create the profile if it somehow doesn't exist
+        user_profile = Profile.objects.create(user=request.user)
+
     if not request.tenant:
         messages.info(request, "Please select an organization to view your profile data.")
         my_ideas = Idea.objects.none()
@@ -384,15 +488,20 @@ def register_page(request):
         logger.warning(f"Invite token '{token}' failed validation.")
         invite = None
 
-    if not invite:
+    if token and not invite:
         messages.error(request, "Invalid or expired invitation.")
         if 'invite_token' in request.session:
             del request.session['invite_token']
         return redirect('login')
 
-    # Force the tenant context to match the invite for form rendering and validation
-    request.tenant = invite.tenant
-    set_current_tenant(invite.tenant)
+    if invite:
+        # Force the tenant context to match the invite for form rendering and validation
+        request.tenant = invite.tenant
+        set_current_tenant(invite.tenant)
+    else:
+        # Open registration allowed: no specific tenant scoped yet
+        request.tenant = None
+        set_current_tenant(None)
 
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
@@ -408,13 +517,25 @@ def register_page(request):
 
                 selected_dept = form.cleaned_data.get('department')
                 user.profile.department = selected_dept
-                user.profile.tenant = invite.tenant
+                user.profile.phone = form.cleaned_data.get('phone')
+                
+                # Assign to the correct tenant explicitly
+                if invite:
+                    user.profile.tenant = invite.tenant
+                elif selected_dept and getattr(selected_dept, 'tenant', None):
+                    user.profile.tenant = selected_dept.tenant
+                else:
+                    # Fallback default tenant
+                    fallback_tenant, _ = Tenant.objects.get_or_create(subdomain='default', defaults={'name': 'Default'})
+                    user.profile.tenant = fallback_tenant
+                    
                 user.profile.save()
 
-                logger.info(f"Profile updated: Tenant '{invite.tenant.subdomain}' assigned.")
+                logger.info(f"Profile updated: Tenant '{user.profile.tenant.subdomain}' assigned.")
 
-                invite.used_at = timezone.now()
-                invite.save()
+                if invite:
+                    invite.used_at = timezone.now()
+                    invite.save()
 
                 if 'invite_token' in request.session:
                     del request.session['invite_token']
@@ -434,8 +555,11 @@ def register_page(request):
             logger.error(f"Registration form validation failed: {form.errors}")
 
     else:
-        request.session['invite_token'] = str(invite.token)
-        form = UserRegisterForm(initial={'email': invite.email})
+        if invite:
+            request.session['invite_token'] = str(invite.token)
+            form = UserRegisterForm(initial={'email': invite.email})
+        else:
+            form = UserRegisterForm()
 
     return render(request, 'gameplay/register.html', {'form': form, 'token': token})
 
@@ -514,8 +638,9 @@ def department_detail(request, department_id):
 def add_department_question(request, department_id):
     department = get_object_or_404(Department, pk=department_id, tenant=request.tenant)
     
-    # Only superusers (Admins) should edit department quizzes
-    if not request.user.is_superuser:
+    # Only superusers (Master Admins) or the assigned Tenant Admin should edit department quizzes
+    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
+    if not request.user.is_superuser and not is_tenant_admin:
         return redirect('department_detail', department_id=department.id)
 
     if request.method == 'POST':
@@ -635,8 +760,9 @@ def campus_map(request):
 
 @login_required
 def accept_idea(request, idea_id):
-    if not request.user.is_superuser:
-        messages.error(request, "Only admins can approve ideas.")
+    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
+    if not request.user.is_superuser and not is_tenant_admin:
+        messages.error(request, "Only company admins can approve ideas.")
         return redirect('ideas_page')
 
     idea = get_object_or_404(Idea, pk=idea_id, tenant=request.tenant)

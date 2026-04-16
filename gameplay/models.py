@@ -9,6 +9,7 @@ import uuid
 class Tenant(models.Model):
     name = models.CharField(max_length=100)
     subdomain = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    tenant_admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_tenants', help_text="Assign an admin for this company.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -71,6 +72,7 @@ class Department(TenantAwareModel):
 class Profile(TenantAwareModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
     total_score = models.IntegerField(default=0)
     bonus_euros = models.IntegerField(default=0)
 

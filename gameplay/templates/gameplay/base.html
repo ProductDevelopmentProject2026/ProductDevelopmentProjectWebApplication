@@ -40,6 +40,9 @@
                 <button type="submit" style="background: none; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 1.1em; margin-left: 20px;">Logout</button>
             </form>
             <a href="{% url 'profile_page' %}" style="float: right;">👤 Profile</a>
+            {% if request.tenant and request.user.id == request.tenant.tenant_admin_id or request.user.is_superuser %}
+                <a href="{% url 'company_admin_dashboard' %}" style="float: right; color: #f39c12;">⚙️ Admin</a>
+            {% endif %}
         {% else %}
             <a href="{% url 'login' %}" style="float: right;">Login</a>
             <a href="{% url 'signup' %}" style="float: right; margin-right: 20px;">Sign Up</a>

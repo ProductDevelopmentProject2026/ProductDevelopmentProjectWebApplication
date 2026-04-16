@@ -56,6 +56,13 @@ class TenantMiddleware:
                     if current_host.startswith('www.'):
                         current_host = current_host[4:]
 
+                    # Handle IP address (localhost) properly, use querystring instead of subdomain
+                    if current_host.startswith('127.0.0.1') or current_host.startswith('localhost'):
+                        # Keep existing query params and add/update tenant
+                        query_dict = request.GET.copy()
+                        query_dict['tenant'] = user_tenant.subdomain
+                        return redirect(f"{request.scheme}://{current_host}{request.path}?{query_dict.urlencode()}")
+
                     if tenant.subdomain and current_host.startswith(tenant.subdomain + '.'):
                         new_host = current_host.replace(tenant.subdomain + '.', user_tenant.subdomain + '.', 1)
                     else:

@@ -1,9 +1,45 @@
 from django import forms
-from .models import Idea, Training, Question, Lesson
+from .models import Idea, Training, Question, Lesson, Profile
 from django.contrib.auth.models import User
 from .models import Department, Problem
 from django.contrib.auth.forms import UserCreationForm
 
+class EmployeeEditForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30, required=False)
+    last_name = forms.CharField(max_length=30, required=False)
+    email = forms.EmailField(required=True)
+    department = forms.ModelChoiceField(queryset=Department.objects.none(), required=False)
+    phone = forms.CharField(max_length=20, required=False)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        self.tenant = kwargs.pop('tenant', None)
+        self.profile = kwargs.pop('profile', None)
+        super().__init__(*args, **kwargs)
+        if self.tenant:
+            self.fields['department'].queryset = Department.objects.filter(tenant=self.tenant)
+        if self.profile:
+            self.fields['department'].initial = self.profile.department
+            self.fields['phone'].initial = self.profile.phone
+            
+        for field in self.fields.values():
+            field.widget.attrs.update({'style': 'padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box;'})
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+            if self.profile:
+                self.profile.department = self.cleaned_data['department']
+                self.profile.phone = self.cleaned_data['phone']
+                self.profile.save()
+        return user
 
 class IdeaForm(forms.ModelForm):
     class Meta:
@@ -55,6 +91,10 @@ class LessonForm(forms.ModelForm):
         }
 
 class UserRegisterForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, required=False, help_text="Optional. Your first name.")
+    last_name = forms.CharField(max_length=30, required=False, help_text="Optional. Your last name.")
+    phone = forms.CharField(max_length=20, required=False, help_text="Optional. Your phone number.")
+
     email = forms.EmailField(
         required=True, 
         help_text="Required. Please enter a valid email address."
@@ -68,7 +108,7 @@ class UserRegisterForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = UserCreationForm.Meta.fields + ('email',)
+        fields = UserCreationForm.Meta.fields + ('first_name', 'last_name', 'email',)
 
 class ProblemForm(forms.ModelForm):
     class Meta:

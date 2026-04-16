@@ -9,10 +9,12 @@ from gameplay.views import (
     take_quiz, register_page, manage_lessons, view_lesson,
     department_detail, add_department_question, take_department_quiz, accept_idea,
     submit_feedback, problems_page, claim_solution, confirm_solved, reject_solution,
-    redeem_page
+    redeem_page, company_admin_dashboard, edit_employee_profile
 )
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('company-admin/', company_admin_dashboard, name='company_admin_dashboard'),
+    path('company-admin/edit-employee/<int:profile_id>/', edit_employee_profile, name='edit_employee_profile'),
     path('', dashboard, name='dashboard'),                 
     path('departments/', departments_page, name='departments_page'), 
     path('ideas/', ideas_page, name='ideas_page'),         
