@@ -66,7 +66,7 @@
                     {{ training.date_time|date:"D, d M @ H:i" }} | 
                     By {{ training.organizer.username }}
                 </small>
-                <p style="margin-top: 10px;">{{ training.description }}</p>
+                <div style="margin-top: 10px;">{{ training.description|safe }}</div>
                 
                 <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
                     <strong>Who is coming?</strong> 
@@ -149,4 +149,61 @@
         </div>
     {% endfor %}
 
+{% endblock %}
+{% block extra_js %}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+<style>
+  #quill-editor {
+    min-height: 250px;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill-blot-formatter@1.0.5/dist/quill-blot-formatter.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    Quill.register('modules/blotFormatter', QuillBlotFormatter.default);
+    var textarea = document.getElementById('id_description');
+    if (textarea) {
+        var editorContainer = document.createElement('div');
+        editorContainer.id = 'quill-editor';
+        textarea.parentNode.insertBefore(editorContainer, textarea);
+        textarea.style.display = 'none';
+
+        var quill = new Quill('#quill-editor', {
+          theme: 'snow',
+          modules: {
+            blotFormatter: {},
+            toolbar: [
+              [{ 'header': [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline'],
+              ['image', 'link', 'blockquote'],
+              [{ 'list': 'ordered'}, { 'list': 'bullet' }]
+            ]
+          }
+        });
+
+        // Load existing content
+        quill.root.innerHTML = textarea.value;
+
+        // Sync before submit
+        var form = textarea.closest('form');
+        form.addEventListener('submit', function() {
+          textarea.value = quill.root.innerHTML;
+        });
+
+        // Allow easy deletion of images by clicking and selecting them
+        quill.root.addEventListener('click', function(ev) {
+            if (ev.target && ev.target.tagName === 'IMG') {
+                let blot = Quill.find(ev.target);
+                if (blot) {
+                    let index = quill.getIndex(blot);
+                    quill.setSelection(index, 1);
+                }
+            }
+        });
+    }
+  });
+</script>
 {% endblock %}

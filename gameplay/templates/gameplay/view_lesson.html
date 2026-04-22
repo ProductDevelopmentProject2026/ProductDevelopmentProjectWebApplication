@@ -14,7 +14,7 @@
         {% endif %}
 
         <div style="font-size: 1.1em; line-height: 1.6; color: #333; margin-bottom: 30px;">
-            {{ lesson.content|linebreaks }}
+            {{ lesson.content|safe }}
         </div>
 
         {% if lesson.attached_file %}
