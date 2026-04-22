@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+import os
+
+base_template = """<!DOCTYPE html>
 <html>
 <head>
     <title>Employee Portal</title>
@@ -107,10 +109,6 @@
             box-shadow: 0 0 0 1px var(--primary-action);
         }
 
-        button, input[type="submit"], input[type="button"], input[type="reset"] {
-            cursor: pointer;
-        }
-
         h1, h2, h3, h4 { color: var(--text-primary); margin-top: 0; }
         p { color: var(--text-secondary); }
         
@@ -139,6 +137,7 @@
     <nav class="navbar">
         <div class="navbar-links">
             <a href="{% url 'dashboard' %}" style="font-weight: 700; color: white; margin-right: 12px; font-size: 1.2rem;">Portal</a>
+            <a href="{% url 'dashboard' %}">Home</a>
             <a href="{% url 'departments_page' %}">Departments</a>
             <a href="{% url 'ideas_page' %}">Ideas</a>
             <a href="{% url 'training_page' %}">Training</a> 
@@ -171,12 +170,10 @@
         {% endif %}
         </div>
     </nav>
-    {% block container %}
     <div class="content-container">
         {% block content %}
         {% endblock %}
     </div>
-    {% endblock %}
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -210,3 +207,9 @@
     </script>
 </body>
 </html>
+"""
+
+filepath = os.path.join("gameplay", "templates", "gameplay", "base.html")
+with open(filepath, "w", encoding="utf-8") as f:
+    f.write(base_template)
+print("Updated successfully")

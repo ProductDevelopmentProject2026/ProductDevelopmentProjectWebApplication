@@ -1,5 +1,6 @@
 {% extends 'gameplay/base.html' %}
 
+{% block container %}
 {% block content %}
 <style>
     /* --- 1. The Container --- */
@@ -7,8 +8,10 @@
         text-align: center;
         padding: 20px;
         background: linear-gradient(135deg, #e8f0f8 0%, #f4f6f9 100%);
-        min-height: 85vh;
+        height: calc(100vh - 72px); /* Full viewport minus navbar */
+        margin: 0;
         overflow: hidden;
+        box-sizing: border-box;
     }
 
     .dashboard-header h2 {
@@ -88,7 +91,8 @@
     /* --- 2. The 3D Scene --- */
     .scene {
         width: 100%;
-        height: 620px;
+        height: calc(100vh - 160px); /* Take up remaining viewport height */
+        min-height: 500px;
         perspective: 1200px;
         display: flex;
         justify-content: center;
@@ -309,7 +313,7 @@
     document.addEventListener("DOMContentLoaded", () => {
         const grid = document.querySelector('.campus-grid');
         const container = document.querySelector('.scene');
-        let currentZoom = 1;
+        let currentZoom = 0.85;
         let currentRotZ = -45;
         
         function updateTransform() {
@@ -386,4 +390,5 @@
         });
     });
 </script>
+{% endblock %}
 {% endblock %}
