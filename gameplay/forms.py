@@ -129,3 +129,13 @@ class SolutionForm(forms.ModelForm):
         widgets = {
             'solution_description': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Explain exactly how to fix this issue...'}),
         }
+
+class DepartmentForm(forms.ModelForm):
+    class Meta:
+        model = Department
+        fields = ['name', 'description', 'video_url']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            'video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/...'}),
+        }

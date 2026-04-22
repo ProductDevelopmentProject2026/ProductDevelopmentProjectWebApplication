@@ -5,7 +5,7 @@
 
     <div class="card" style="margin-top: 20px; border-top: 5px solid #e67e22;">
         <h1>{{ department.name }}</h1>
-        <p style="font-size: 1.2em; color: #555;">{{ department.description }}</p>
+        <div style="font-size: 1.2em; color: #555;">{{ department.description|safe }}</div>
         
         {% if video_embed_url %}
             <div style="margin: 20px 0;">

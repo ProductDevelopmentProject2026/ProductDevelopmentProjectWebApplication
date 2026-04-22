@@ -158,9 +158,9 @@
         <div class="navbar-right">
         {% if user.is_authenticated %}
             {% if request.tenant and request.user.id == request.tenant.tenant_admin_id or request.user.is_superuser %}
-                <a href="{% url 'company_admin_dashboard' %}" style="color: #F6AD55;">⚙️ Admin</a>
+                <a href="{% url 'company_admin_dashboard' %}" style="color: #F6AD55;">&#9881;&#65039; Admin</a>
             {% endif %}
-            <a href="{% url 'profile_page' %}">👤 Profile</a>
+            <a href="{% url 'profile_page' %}">&#128100; Profile</a>
             <form action="{% url 'logout' %}" method="post" style="margin: 0; display: inline;">
                 {% csrf_token %}
                 <button type="submit" style="background: none; border: none; color: #E2E8F0; font-weight: 500; font-size: 1rem; cursor: pointer; padding: 0;">Logout</button>

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg, Q
 from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, Invite, Tenant
-from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm, EmployeeEditForm
+from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm, EmployeeEditForm, DepartmentForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 import re  
@@ -73,6 +73,34 @@ def edit_employee_profile(request, profile_id):
     return render(request, 'gameplay/edit_employee_profile.html', {
         'form': form,
         'employee_profile': employee_profile,
+        'tenant': request.tenant,
+    })
+
+@login_required
+def edit_department(request, dept_id):
+    if not request.tenant:
+        messages.info(request, "Please select an organization.")
+        return redirect('dashboard')
+    
+    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
+    if not request.user.is_superuser and not is_tenant_admin:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect('dashboard')
+
+    department = get_object_or_404(Department, id=dept_id, tenant=request.tenant)
+
+    if request.method == 'POST':
+        form = DepartmentForm(request.POST, request.FILES, instance=department)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Successfully updated department {department.name}.")
+            return redirect('company_admin_dashboard')
+    else:
+        form = DepartmentForm(instance=department)
+
+    return render(request, 'gameplay/edit_department.html', {
+        'form': form,
+        'department': department,
         'tenant': request.tenant,
     })
 
