@@ -1,9 +1,28 @@
 {% extends 'gameplay/base.html' %}
 {% block content %}
-    <h1>My Profile: {{ request.user.username }}</h1>
+    <style>
+        .schedule-card {
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 40px;
+            background: #fff;
+            margin-bottom: 40px;
+        }
+        .schedule-title {
+            color: #4b5563;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+    <h1 style="margin-bottom: 30px;">My Profile: {{ request.user.username }}</h1>
     
-    <div class="card">
-        <h3>Details</h3>
+    <div class="schedule-card">
+        <h3 class="schedule-title">Details</h3>
         <p><strong>Department:</strong> {{ profile.department.name|default:"Not Assigned" }}</p>
         <p><strong>Email:</strong> {{ request.user.email }}</p>
         
@@ -11,8 +30,8 @@
         <p><strong>Bonuses:</strong> <span style="color: #27ae60; font-weight: bold; font-size: 1.2em;">{{ request.user.profile.bonus_euros }} Euros</span></p>
     </div>
 
-    <div class="card" style="margin-top: 20px; margin-bottom: 20px; border-top: 5px solid #27ae60;">
-        <h3 style="margin-bottom: 15px; color: #2c3e50;">📊 Innovation & Help Stats</h3>
+    <div class="schedule-card" style="margin-top: 20px; border-top: 5px solid #27ae60;">
+        <h3 class="schedule-title" style="margin-bottom: 15px; color: #2c3e50;">📊 Innovation & Help Stats</h3>
         
         <div style="display: flex; gap: 20px;">
             <div style="flex: 1; background: #e0f2f1; border: 1px solid #b2dfdb; padding: 15px; border-radius: 8px; text-align: center;">
@@ -35,8 +54,8 @@
         </div>
     </div>
     
-    <div class="card">
-        <h3>My Submitted Ideas</h3>
+    <div class="schedule-card">
+        <h3 class="schedule-title">My Submitted Ideas</h3>
         <ul>
             {% for idea in my_ideas %}
                 <li>{{ idea.title }} ({% if idea.is_anonymous %}👻 Anonymous{% else %}Public{% endif %})</li>
@@ -46,8 +65,8 @@
         </ul>
     </div>
 
-    <div class="card" style="border-top: 5px solid #f39c12; margin-bottom: 20px;">
-        <h3>My Shared Problems (Await My Confirmation)</h3>
+    <div class="schedule-card" style="border-top: 5px solid #f39c12;">
+        <h3 class="schedule-title">My Shared Problems (Await My Confirmation)</h3>
         <p style="color: #7f8c8d; margin-top: 0;">Confirm if a fellow employee's suggested solution actually worked for your problem.</p>
         <ul style="padding-left: 0; list-style: none; border-left: 3px solid #f39c12; padding-left: 15px;">
             {% for problem in request.user.submitted_problems.all %}
@@ -93,8 +112,8 @@
     </div>
 
     {% if training_stats %}
-        <div class="card" style="margin-top: 20px; border-top: 5px solid #3498db;">
-            <h3 style="color: #2c3e50; margin-bottom: 20px;">📈 My Hosted Trainings Analytics</h3>
+        <div class="schedule-card" style="border-top: 5px solid #3498db;">
+            <h3 class="schedule-title" style="color: #2c3e50; margin-bottom: 20px;">📈 My Hosted Trainings Analytics</h3>
             
             {% for stat in training_stats %}
                 <div style="background: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">

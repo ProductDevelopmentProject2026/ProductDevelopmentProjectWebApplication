@@ -1,12 +1,31 @@
 {% extends 'gameplay/base.html' %}
 
 {% block content %}
+    <style>
+        .schedule-card {
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 40px;
+            background: #fff;
+            margin-bottom: 40px;
+        }
+        .schedule-title {
+            color: #4b5563;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
     <div style="max-width: 600px; margin: 0 auto; text-align: center;">
         <h1 style="color: #2c3e50;">Reward Center</h1>
         <p style="font-size: 1.2em; color: #555;">Exchange your hard-earned points for a Gift Card!</p>
 
-        <div class="card" style="margin-top: 30px; border-top: 5px solid #f39c12;">
-            <h2>Current Balance</h2>
+        <div class="schedule-card" style="margin-top: 30px; border-top: 5px solid #f39c12;">
+            <h2 class="schedule-title">Current Balance</h2>
             <p style="font-size: 3em; font-weight: bold; color: #f39c12; margin: 10px 0;">
                 {{ profile.total_score }} <small style="font-size: 0.4em; color: #888;">pts</small>
             </p>
@@ -20,8 +39,8 @@
             {% endfor %}
         {% endif %}
 
-        <div class="card" style="background-color: #fffaf0;">
-            <h2 style="color: #e67e22;">20€ Gift Card</h2>
+        <div class="schedule-card" style="background-color: #fffaf0;">
+            <h2 class="schedule-title" style="color: #e67e22;">20€ Gift Card</h2>
             <p>Cost: <strong>100 points</strong></p>
             <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">
                 Use this card for coffee, snacks, or shopping exactly as you wish!

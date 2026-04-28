@@ -1,7 +1,26 @@
 {% extends 'gameplay/base.html' %}
 {% block content %}
-<div class="card" style="max-width: 400px; margin: auto;">
-    <h2>Employee Login</h2>
+<style>
+    .schedule-card {
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        padding: 40px;
+        background: #fff;
+        margin-bottom: 40px;
+    }
+    .schedule-title {
+        color: #4b5563;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 25px;
+        margin-top: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
+<div class="schedule-card" style="max-width: 400px; margin: auto;">
+    <h2 class="schedule-title">Employee Login</h2>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

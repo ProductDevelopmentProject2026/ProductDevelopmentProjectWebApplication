@@ -1,8 +1,27 @@
 {% extends 'gameplay/base.html' %}
 
 {% block content %}
-<div style="margin: 20px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 600px; margin-left: auto; margin-right: auto;">
-    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+<style>
+    .schedule-card {
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        padding: 40px;
+        background: #fff;
+        margin-bottom: 40px;
+    }
+    .schedule-title {
+        color: #4b5563;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 25px;
+        margin-top: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
+<div class="schedule-card" style="margin: 20px; padding: 40px; background: white; max-width: 600px; margin-left: auto; margin-right: auto;">
+    <h2 class="schedule-title" style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
         ✏️ Edit Profile: {{ employee_profile.user.username }}
     </h2>
 

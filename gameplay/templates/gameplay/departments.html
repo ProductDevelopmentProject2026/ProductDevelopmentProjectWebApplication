@@ -1,8 +1,27 @@
 {% extends 'gameplay/base.html' %}
 
 {% block content %}
-    <h1>Department Leaderboard</h1>
-    <div class="card">
+    <style>
+        .schedule-card {
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 40px;
+            background: #fff;
+            margin-bottom: 40px;
+        }
+        .schedule-title {
+            color: #4b5563;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+    <h1 style="margin-bottom: 30px;">Department Leaderboard</h1>
+    <div class="schedule-card">
         <ul style="list-style: none; padding: 0;">
             {% for dept in departments %}
             <li style="padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-size: 1.2em;">

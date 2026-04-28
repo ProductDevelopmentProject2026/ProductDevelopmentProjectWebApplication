@@ -1,10 +1,29 @@
 {% extends 'gameplay/base.html' %}
 
 {% block content %}
+<style>
+    .schedule-card {
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        padding: 40px;
+        background: #fff;
+        margin-bottom: 40px;
+    }
+    .schedule-title {
+        color: #4b5563;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 25px;
+        margin-top: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
     <a href="{% url 'training_page' %}" style="text-decoration: none;">← Back to Course Hub</a>
     
-    <div class="card" style="margin-top: 20px;">
-        <h1 style="margin-top: 0; color: #2c3e50;">Lesson {{ lesson.order }}: {{ lesson.title }}</h1>
+    <div class="schedule-card" style="margin-top: 20px;">
+        <h1 class="schedule-title" style="margin-top: 0; color: #2c3e50;">Lesson {{ lesson.order }}: {{ lesson.title }}</h1>
         
         {% if lesson.video_url %}
             <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
