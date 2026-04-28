@@ -26,9 +26,12 @@ class TenantMiddleware:
         # 2) Subdomain fallback
         if not tenant:
             host = request.get_host().split(':')[0]
+            is_ip = all(part.isdigit() for part in host.split('.'))
             subdomain = host.split('.')[0]
+            
             # Added testserver to prevent Django's default test client from triggering a 404
-            if subdomain and subdomain not in ['www', 'localhost', '127', 'testserver']:
+            # Skip subdomain checks for IP addresses
+            if subdomain and not is_ip and subdomain not in ['www', 'localhost', 'testserver']:
                 tenant = Tenant.objects.filter(subdomain=subdomain).first()
                 if not tenant:
                     raise Http404("Organization not found.")
@@ -56,8 +59,9 @@ class TenantMiddleware:
                     if current_host.startswith('www.'):
                         current_host = current_host[4:]
 
-                    # Handle IP address (localhost) properly, use querystring instead of subdomain
-                    if current_host.startswith('127.0.0.1') or current_host.startswith('localhost'):
+                    # Handle IP address (localhost/cloud IP) properly, use querystring instead of subdomain
+                    is_current_ip = all(part.isdigit() for part in current_host.split(':')[0].split('.'))
+                    if is_current_ip or current_host.startswith('localhost') or current_host.startswith('testserver'):
                         # Keep existing query params and add/update tenant
                         query_dict = request.GET.copy()
                         query_dict['tenant'] = user_tenant.subdomain
