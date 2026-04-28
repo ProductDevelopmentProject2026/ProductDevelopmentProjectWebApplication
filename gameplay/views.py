@@ -1098,13 +1098,25 @@ def _process_csv_email(raw_email, tenant, request, results, summary):
         
         # Deduce the host cleanly (e.g. stripping existing subdomains or 'www.')
         base_host = request.get_host()
+        
+        # Check if the host is an IP address
+        host_without_port = base_host.split(':')[0]
+        is_ip = all(part.isdigit() for part in host_without_port.split('.'))
+
         if base_host.startswith('www.'):
             base_host = base_host[4:]
-        for t in Tenant.objects.all():
-            if base_host.startswith(t.subdomain + '.'):
-                base_host = base_host[len(t.subdomain)+1:]
-                break
+        
+        if not is_ip:
+            for t in Tenant.objects.all():
+                if base_host.startswith(t.subdomain + '.'):
+                    base_host = base_host[len(t.subdomain)+1:]
+                    break
                 
+        def get_invite_link(invite_obj):
+            if is_ip or base_host.startswith('localhost') or base_host.startswith('127.0.0'):
+                return f"{request.scheme}://{base_host}/signup/?token={invite_obj.token}&tenant={tenant.subdomain}"
+            return f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite_obj.token}"
+
         invite = Invite.objects.filter(email=email, tenant=tenant).first()
         
         if invite:
@@ -1116,7 +1128,7 @@ def _process_csv_email(raw_email, tenant, request, results, summary):
                 # Refresh token for unused invites
                 invite.token = uuid.uuid4()
                 invite.save()
-                link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
+                link = get_invite_link(invite)
                 summary['refreshed'] += 1
                 
                 email_sent, email_err = _send_invite_email(email, tenant, link)
@@ -1126,13 +1138,13 @@ def _process_csv_email(raw_email, tenant, request, results, summary):
                     summary['emails_sent'] += 1
                 else:
                     logger.info(f" -> Refreshed existing token but email failed")
-                    results.append({'email': email, 'status': 'Refreshed + Failed', 'link': link})
+                    results.append({'email': email, 'status': 'Refreshed + Failed (No Mail Server)', 'link': link})
                     summary['emails_failed'] += 1
                     if email_err and email_err not in summary['email_error_details']:
                         summary['email_error_details'].append(email_err)
         else:
             invite = Invite.objects.create(email=email, tenant=tenant)
-            link = f"{request.scheme}://{tenant.subdomain}.{base_host}/signup/?token={invite.token}"
+            link = get_invite_link(invite)
             summary['created'] += 1
             
             email_sent, email_err = _send_invite_email(email, tenant, link)
@@ -1142,7 +1154,7 @@ def _process_csv_email(raw_email, tenant, request, results, summary):
                 summary['emails_sent'] += 1
             else:
                 logger.info(f" -> Created successfully but email failed")
-                results.append({'email': email, 'status': 'Created + Failed', 'link': link})
+                results.append({'email': email, 'status': 'Created + Failed (No Mail Server)', 'link': link})
                 summary['emails_failed'] += 1
                 if email_err and email_err not in summary['email_error_details']:
                     summary['email_error_details'].append(email_err)
