@@ -213,3 +213,12 @@ class Problem(TenantAwareModel):
 
     def __str__(self):
         return f"{self.submitted_by.username}'s problem (Solved: {self.is_solved})"
+
+class RedeemedReward(TenantAwareModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='redeemed_rewards')
+    store = models.CharField(max_length=100)
+    amount = models.IntegerField()
+    date_redeemed = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.store} {self.amount}€"

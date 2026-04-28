@@ -148,4 +148,28 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <div class="schedule-card" style="border-top: 5px solid #9b59b6;">
+        <h3 class="schedule-title" style="color: #2c3e50; margin-bottom: 15px;">🎁 My Redeemed Gift Cards</h3>
+        {% if redeemed_rewards %}
+            <ul style="list-style: none; padding: 0;">
+                {% for reward in redeemed_rewards %}
+                    <li style="background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: #2c3e50; font-size: 1.1em;">{{ reward.amount }}€ {{ reward.store }} Gift Card</strong>
+                            <div style="color: #7f8c8d; font-size: 0.9em; margin-top: 5px;">
+                                Redeemed on: {{ reward.date_redeemed|date:"Y-m-d H:i" }}
+                            </div>
+                        </div>
+                        <div style="background: #e8f5e9; color: #2e7d32; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">
+                            Ready to use
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="color: #777; font-style: italic;">You haven't redeemed any gift cards yet. <a href="{% url 'redeem_page' %}" style="color: #3498db; text-decoration: none; font-weight: bold;">Browse Rewards Center</a></p>
+        {% endif %}
+    </div>
+
 {% endblock %}

@@ -338,6 +338,10 @@ def profile_page(request):
             'avg_rating': round(avg_rating, 1), # Round to 1 decimal place (e.g., 4.5)
             'feedbacks': feedbacks
         })
+        
+    # Get redeemed rewards
+    from .models import RedeemedReward
+    redeemed_rewards = RedeemedReward.objects.filter(user=request.user).order_by('-date_redeemed')
 
     return render(request, 'gameplay/profile.html', {
         'profile': user_profile,
@@ -345,6 +349,7 @@ def profile_page(request):
         'accepted_ideas_count': accepted_ideas_count,
         'pending_ideas_count': pending_ideas_count,
         'training_stats': training_stats, # Pass stats to the template
+        'redeemed_rewards': redeemed_rewards,
     })
 
 # 5. Training Page (List + Create)
@@ -952,14 +957,36 @@ def reject_solution(request, problem_id):
 @login_required
 def redeem_page(request):
     if request.method == 'POST':
-        # Cost is 100 points
-        if request.user.profile.total_score >= 100:
-            request.user.profile.total_score -= 100
-            request.user.profile.bonus_euros += 20
-            request.user.profile.save()
-            messages.success(request, "Success! You have redeemed 100 points for a 20€ Gift Card! Check your profile balance.")
+        reward_tier = request.POST.get('reward_tier')
+        store_choice = request.POST.get('store_choice', 'Generic')
+        
+        # Define reward costs and values
+        rewards = {
+            '20': {'points': 100, 'euros': 20, 'name': '20€ Gift Card'},
+            '50': {'points': 200, 'euros': 50, 'name': '50€ Gift Card'},
+            '100': {'points': 350, 'euros': 100, 'name': '100€ VIP Gift Card'},
+        }
+
+        if reward_tier in rewards:
+            reward = rewards[reward_tier]
+            if request.user.profile.total_score >= reward['points']:
+                request.user.profile.total_score -= reward['points']
+                request.user.profile.bonus_euros += reward['euros']
+                request.user.profile.save()
+                
+                from .models import RedeemedReward
+                RedeemedReward.objects.create(
+                    user=request.user,
+                    store=store_choice,
+                    amount=reward['euros']
+                )
+
+                messages.success(request, f"Success! You have redeemed {reward['points']} points for a {reward['name']} at {store_choice}! Check your profile balance.")
+            else:
+                messages.error(request, f"Not enough points! You need at least {reward['points']} points for this reward.")
         else:
-            messages.error(request, "Not enough points! You need at least 100 points.")
+            messages.error(request, "Invalid reward selected.")
+            
         return redirect('redeem_page')
         
     return render(request, 'gameplay/redeem.html', {'profile': request.user.profile})

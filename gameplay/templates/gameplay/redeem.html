@@ -40,21 +40,61 @@
         {% endif %}
 
         <div class="schedule-card" style="background-color: #fffaf0;">
-            <h2 class="schedule-title" style="color: #e67e22;">20€ Gift Card</h2>
-            <p>Cost: <strong>100 points</strong></p>
-            <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">
-                Use this card for coffee, snacks, or shopping exactly as you wish!
-            </p>
+            <h2 class="schedule-title" style="color: #e67e22;">Gift Card Choices</h2>
             
             <form method="post">
                 {% csrf_token %}
+                <div style="margin-bottom: 20px; text-align: left; padding: 0 40px;">
+                    <label style="font-weight: bold; color: #4b5563; display: block; margin-bottom: 10px;">Select Reward:</label>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <label style="display: flex; align-items: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                            <input type="radio" name="reward_tier" value="20" required style="margin-right: 15px; transform: scale(1.5);">
+                            <div style="flex-grow: 1;">
+                                <strong style="font-size: 1.1em; color: #1f2937;">20€ Gift Card</strong>
+                                <span style="display: inline-block; background: #fef3c7; color: #d97706; padding: 3px 8px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-left: 10px;">100 points</span>
+                                <div style="color: #6b7280; font-size: 0.9em; margin-top: 4px;">Use this card for coffee, snacks, or shopping!</div>
+                            </div>
+                        </label>
+
+                        <label style="display: flex; align-items: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                            <input type="radio" name="reward_tier" value="50" required style="margin-right: 15px; transform: scale(1.5);">
+                            <div style="flex-grow: 1;">
+                                <strong style="font-size: 1.1em; color: #1f2937;">50€ Gift Card</strong>
+                                <span style="display: inline-block; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-left: 10px;">200 points</span>
+                                <div style="color: #6b7280; font-size: 0.9em; margin-top: 4px;">Perfect for a nice dinner out or premium shopping!</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                            <input type="radio" name="reward_tier" value="100" required style="margin-right: 15px; transform: scale(1.5);">
+                            <div style="flex-grow: 1;">
+                                <strong style="font-size: 1.1em; color: #1f2937;">100€ VIP Gift Card</strong>
+                                <span style="display: inline-block; background: #dcfce7; color: #047857; padding: 3px 8px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-left: 10px;">350 points</span>
+                                <div style="color: #6b7280; font-size: 0.9em; margin-top: 4px;">The ultimate reward! Treat yourself to something special.</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px; text-align: left; padding: 0 40px; margin-top: 30px;">
+                    <label style="font-weight: bold; color: #4b5563; display: block; margin-bottom: 10px;">Select Store:</label>
+                    <select name="store_choice" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 1.1em; color: #1f2937; background-color: #f9fafb;">
+                        <option value="" disabled selected>-- Choose your favorite store --</option>
+                        <option value="Maxima">Maxima</option>
+                        <option value="IKI">IKI</option>
+                        <option value="Nike">Nike</option>
+                        <option value="Adidas">Adidas</option>
+                    </select>
+                </div>
+
                 <button type="submit" 
                         {% if profile.total_score < 100 %}disabled{% endif %}
-                        style="background: {% if profile.total_score < 100 %}#bdc3c7{% else %}#e67e22{% endif %}; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 5px; cursor: {% if profile.total_score < 100 %}not-allowed{% else %}pointer{% endif %}; width: 100%; transition: background 0.3s;">
+                        style="background: {% if profile.total_score < 100 %}#bdc3c7{% else %}#e67e22{% endif %}; color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 5px; cursor: {% if profile.total_score < 100 %}not-allowed{% else %}pointer{% endif %}; width: calc(100% - 80px); transition: background 0.3s; margin-top: 10px;">
                     {% if profile.total_score < 100 %}
-                        Need more points! ({{ profile.total_score }}/100)
+                        Need minimum 100 points! ({{ profile.total_score }}/100)
                     {% else %}
-                        Redeem Now
+                        Redeem Selected Reward
                     {% endif %}
                 </button>
             </form>
