@@ -1,0 +1,187 @@
+﻿{% extends 'gameplay/base.html' %}
+{% block content %}
+<style>
+    .analytics-header { margin-bottom: 32px; }
+    .analytics-header p { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #1e5a40; letter-spacing: 0.05em; margin-bottom: 8px;}
+    .analytics-header h1 { font-size: 2.2rem; font-family: var(--font-serif); margin-bottom: 4px; display: inline-block;}
+    .analytics-subtitle { color: var(--text-secondary); font-size: 0.85rem; }
+    
+    .action-buttons { display: inline-flex; gap: 8px; float: right;}
+    .action-btn { background: white; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; color: var(--text-primary); cursor: pointer;}
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+    .stat-card {
+        background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+        content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; opacity: 0.3;
+    }
+    .stat-card:nth-child(1)::before { background: #cbd5e1; }
+    .stat-card:nth-child(2)::before { background: #fecdd3; }
+    .stat-card:nth-child(3)::before { background: #bae6fd; }
+    .stat-card:nth-child(4)::before { background: #fef08a; }
+    
+    .icon-wrapper { width: 32px; height: 32px; border-radius: 8px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 1.2rem; }
+    
+    .stat-value { font-size: 2rem; font-weight: 800; margin-bottom: 4px;}
+    .stat-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.05em; margin-bottom: 6px; }
+    .stat-sub { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; }
+    .stat-pill { display: inline-block; padding: 4px 10px; border-radius: 16px; font-size: 0.7rem; font-weight: 700; background: #eef2e6; color: #1e5a40; border: 1px solid #dcfce7;}
+    
+    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .chart-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+    .chart-title-sm { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;}
+    .chart-title { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; margin-bottom: 24px;}
+</style>
+
+<div class="analytics-header">
+    <div class="action-buttons">
+        <button class="action-btn">↓ Excel</button>
+        <button class="action-btn">🖨 PDF</button>
+        <button class="action-btn">← Dashboard</button>
+    </div>
+    <p>WORKFORCE ANALYTICS</p>
+    <h1>Performance & Engagement</h1>
+    <div class="analytics-subtitle">Default — last 12 months overview</div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="icon-wrapper">💡</div>
+        <div class="stat-value">{{ ideas_submitted }}</div>
+        <div class="stat-label">IDEAS SUBMITTED</div>
+        <div class="stat-sub">{{ ideas_accepted }} accepted</div>
+        <div class="stat-pill">{{ acceptance_rate }}% acceptance</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon-wrapper">🔧</div>
+        <div class="stat-value">{{ problems_raised }}</div>
+        <div class="stat-label">PROBLEMS RAISED</div>
+        <div class="stat-sub">{{ problems_resolved }} resolved</div>
+        <div class="stat-pill">{{ resolved_rate }}% resolved</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon-wrapper">👥</div>
+        <div class="stat-value">{{ team_members }}</div>
+        <div class="stat-label">TEAM MEMBERS</div>
+        <div class="stat-sub">{{ active_this_month }} active this month</div>
+        <div class="stat-pill" style="color: #c2410c; background: #ffedd5; border-color: #fed7aa;">{{ engagement_rate }}% engaged</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon-wrapper">⭐</div>
+        <div class="stat-value">{{ total_points }}</div>
+        <div class="stat-label">TOTAL POINTS EARNED</div>
+        <div class="stat-sub">€{{ total_bonuses }} in bonuses</div>
+        <div class="stat-pill">{{ quizzes_completed }} quiz completions</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon-wrapper">📋</div>
+        <div class="stat-value">{{ trainings_created }}</div>
+        <div class="stat-label">TRAININGS CREATED</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon-wrapper">🎓</div>
+        <div class="stat-value">{{ training_enrollments }}</div>
+        <div class="stat-label">TRAINING ENROLMENTS</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon-wrapper">🏆</div>
+        <div class="stat-value">{{ active_last_7_days }}</div>
+        <div class="stat-label">ACTIVE LAST 7 DAYS</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon-wrapper">📝</div>
+        <div class="stat-value">{{ quizzes_completed }}</div>
+        <div class="stat-label">QUIZZES COMPLETED</div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <div class="chart-title-sm">ACTIVITY OVER TIME</div>
+        <div class="chart-title">12-Month Engagement Trend</div>
+        <div style="height: 250px; background: #f8fafc; border-radius: 8px; display: flex; align-items: flex-end; padding: 10px; position:relative;">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title-sm">CONTRIBUTION MIX</div>
+        <div class="chart-title">Activity Breakdown</div>
+        <div style="height: 250px; display: flex; align-items: center; justify-content: center; position:relative;">
+           <canvas id="mixChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    const labels = {{ chart_labels|safe }};
+    const loginsData = {{ chart_logins|safe }};
+    const problemsData = {{ chart_problems|safe }};
+    const ideasData = {{ chart_ideas|safe }};
+
+    const ctxTrend = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Active Logins',
+                    data: loginsData,
+                    borderColor: '#1e5a40',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Problems Raised',
+                    data: problemsData,
+                    borderColor: '#ca8a04',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Trainings Created',
+                    data: ideasData,
+                    borderColor: '#0ea5e9',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    const ctxMix = document.getElementById('mixChart').getContext('2d');
+    new Chart(ctxMix, {
+        type: 'doughnut',
+        data: {
+            labels: ['Ideas', 'Problems', 'Training Enrolments'],
+            datasets: [{
+                data: [{{ mix_ideas_pct }}, {{ mix_probs_pct }}, {{ mix_trainings_pct }}],
+                backgroundColor: ['#1e5a40', '#ca8a04', '#0ea5e9'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

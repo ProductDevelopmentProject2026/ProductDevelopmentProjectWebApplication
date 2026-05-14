@@ -89,13 +89,19 @@
                                 {% endif %}
                             </a>
 
-                            {% if request.user.is_superuser %}
+                            {% if request.user.is_superuser or request.tenant.tenant_admin_id == request.user.id %}
                                 <div style="margin-top: 8px;">
-                                    <a href="{% url 'accept_idea' idea.id %}">
-                                        <button style="background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
-                                            ✅ Accept
-                                        </button>
-                                    </a>
+                                    {% if idea.accepted_by.count > 0 %}
+                                        <span style="background: #86efac; color: #065f46; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.85em; font-weight: 600;">
+                                            ✓ Accepted
+                                        </span>
+                                    {% else %}
+                                        <a href="{% url 'accept_idea' idea.id %}">
+                                            <button style="background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                                                ✅ Accept
+                                            </button>
+                                        </a>
+                                    {% endif %}
                                 </div>
                             {% endif %}
                         </div>

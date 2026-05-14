@@ -1,0 +1,121 @@
+{% extends 'gameplay/base.html' %}
+{% block content %}
+<style>
+    .alerts-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end;}
+    .alerts-header p { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.05em; margin-bottom: 8px;}
+    .alerts-header h1 { font-size: 2.2rem; font-family: var(--font-serif); margin-bottom: 8px;}
+    .alerts-subtitle { color: var(--text-secondary); font-size: 0.85rem; max-width: 500px;}
+    
+    .alerts-actions { display: flex; gap: 12px; align-items: center; }
+    .unread-pill { background: #eef2e6; color: #1e5a40; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;}
+    [data-theme="dark"] .unread-pill { background: #1a2e23; color: #86efac; }
+
+    .section-label {
+        font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary);
+        letter-spacing: 0.08em; margin-bottom: 16px; margin-top: 32px; padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .alert-card {
+        background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .alert-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .alert-card.idea-accepted { border-left: 4px solid #22c55e; }
+    .alert-card.points-earned { border-left: 4px solid #f59e0b; }
+    .alert-card.team-activity { border-left: 4px solid #3b82f6; }
+
+    .icon-wrapper { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;}
+    .icon-idea { background: #dcfce7; }
+    .icon-points { background: #fef3c7; }
+    .icon-team { background: #dbeafe; }
+    [data-theme="dark"] .icon-idea { background: #14532d; }
+    [data-theme="dark"] .icon-points { background: #78350f; }
+    [data-theme="dark"] .icon-team { background: #1e3a5f; }
+    
+    .alert-content { flex-grow: 1; }
+    .alert-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; color: var(--text-primary);}
+    .alert-desc { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px; }
+    .alert-meta { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;}
+    
+    .points-badge {
+        background: #fef3c7; color: #92400e; font-weight: 700; font-size: 0.85rem;
+        padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+    }
+    [data-theme="dark"] .points-badge { background: #78350f; color: #fde68a; }
+
+    .empty-state {
+        background: var(--card-bg); border-radius: 16px; padding: 60px 40px;
+        text-align: center; color: var(--text-secondary); border: 1px dashed var(--border-color);
+    }
+    .empty-state-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state p { font-size: 1rem; max-width: 400px; margin: 0 auto; }
+</style>
+
+<div class="alerts-header">
+    <div>
+        <p>NOTIFICATIONS</p>
+        <h1>Your Alerts</h1>
+        <div class="alerts-subtitle">Stay up to date — see when your ideas are accepted, points are awarded, and what's happening across your team.</div>
+    </div>
+    <div class="alerts-actions">
+        <span class="unread-pill">{{ my_logs|length }} NOTIFICATION{{ my_logs|length|pluralize:"S" }}</span>
+        <a href="{% url 'dashboard' %}" style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; color: var(--text-primary); text-decoration: none;">← Dashboard</a>
+    </div>
+</div>
+
+<!-- Personal Notifications -->
+{% if my_logs %}
+<div class="section-label">🔔 Your Notifications</div>
+{% for log in my_logs %}
+<div class="alert-card {% if 'accepted' in log.action_name %}idea-accepted{% elif 'points' in log.action_name or log.points > 0 %}points-earned{% endif %}">
+    <div class="icon-wrapper {% if 'accepted' in log.action_name %}icon-idea{% else %}icon-points{% endif %}">
+        {% if 'accepted' in log.action_name %}✅{% elif log.points > 0 %}🏆{% else %}⭐{% endif %}
+    </div>
+    <div class="alert-content">
+        <div class="alert-title">{{ log.action_name }}</div>
+        <div class="alert-desc">
+            {% if log.points > 0 %}
+                You earned <strong>+{{ log.points }} points</strong> for this achievement.
+            {% else %}
+                Activity logged for your account.
+            {% endif %}
+        </div>
+        <div class="alert-meta">{{ log.date_created|timesince }} AGO</div>
+    </div>
+    {% if log.points > 0 %}
+    <div class="points-badge">+{{ log.points }} pts</div>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">🔔</div>
+    <p>No notifications yet. When your ideas get accepted or you earn points, you'll see them here!</p>
+</div>
+{% endif %}
+
+<!-- Team Activity (Admins only) -->
+{% if all_logs %}
+<div class="section-label" style="margin-top: 48px;">👥 Team Activity</div>
+{% for log in all_logs %}
+<div class="alert-card team-activity">
+    <div class="icon-wrapper icon-team">👤</div>
+    <div class="alert-content">
+        <div class="alert-title">{{ log.action_name }}</div>
+        <div class="alert-desc">User <strong>{{ log.user.username }}</strong> earned +{{ log.points }} points.</div>
+        <div class="alert-meta">{{ log.date_created|timesince }} AGO &nbsp;&nbsp; BY {{ log.user.username|upper }}</div>
+    </div>
+    {% if log.points > 0 %}
+    <div class="points-badge">+{{ log.points }} pts</div>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% endblock %}

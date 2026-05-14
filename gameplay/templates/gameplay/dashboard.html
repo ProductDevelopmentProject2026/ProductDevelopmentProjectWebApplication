@@ -1,394 +1,363 @@
-{% extends 'gameplay/base.html' %}
+{% extends "gameplay/base.html" %}
+{% load static %}
 
 {% block container %}
-{% block content %}
-<style>
-    /* --- 1. The Container --- */
-    .dashboard-container {
-        text-align: center;
-        padding: 20px;
-        background: linear-gradient(135deg, #e8f0f8 0%, #f4f6f9 100%);
-        height: calc(100vh - 72px); /* Full viewport minus navbar */
-        margin: 0;
-        overflow: hidden;
-        box-sizing: border-box;
-    }
+<div style="padding: 20px 40px;">
 
-    .dashboard-header h2 {
-        font-size: 28px;
-        color: #1e293b;
-        margin-bottom: 4px;
-    }
+    <style>
+        #campus-map-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        #campus-map-container {
+            width: 100%;
+            height: 85vh;
+            background: linear-gradient(180deg, #e8f4f8 0%, #dff0f7 100%);
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+        [data-theme="dark"] #campus-map-container {
+            background: linear-gradient(180deg, #1a2332 0%, #141c28 100%);
+        }
+        .map-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .map-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary, #1a2b3c);
+            margin-bottom: 8px;
+        }
+        .map-header p {
+            color: var(--text-secondary, #7b8fa0);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        .map-live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0faf5;
+            border: 1px solid #c6f0d9;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2d8a5e;
+            margin-bottom: 20px;
+        }
+        .map-live-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34d399;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+        .map-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 10;
+        }
+        .map-controls button {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #d1dce5;
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            color: #4a6275;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            backdrop-filter: blur(8px);
+        }
+        .map-controls button:hover {
+            background: #ffffff;
+            border-color: #a0b8ca;
+            color: #1a2b3c;
+        }
+    </style>
 
-    .dashboard-header p {
-        color: #64748b;
-        font-size: 14px;
-        margin-bottom: 0;
-    }
-
-    /* --- Top Left Status --- */
-    .status-indicator {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        background: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #475569;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        z-index: 10;
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #22c55e;
-        border-radius: 50%;
-        display: inline-block;
-    }
-
-    /* --- Floating UI Controls --- */
-    .controls-panel {
-        position: absolute;
-        bottom: 30px;
-        right: 30px;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(4px);
-        padding: 8px;
-        border-radius: 12px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        z-index: 10;
-    }
-
-    .control-btn {
-        width: 40px;
-        height: 40px;
-        border: none;
-        background: transparent;
-        border-radius: 8px;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 20px;
-        color: #475569;
-        transition: background 0.2s;
-    }
-
-    .control-btn:hover {
-        background: #f1f5f9;
-        color: #0f172a;
-    }
-
-    /* --- 2. The 3D Scene --- */
-    .scene {
-        width: 100%;
-        height: calc(100vh - 160px); /* Take up remaining viewport height */
-        min-height: 500px;
-        perspective: 1200px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 20px;
-    }
-
-    /* --- 3. The Grid Floor --- */
-    .campus-grid {
-        position: relative;
-        width: 600px;
-        height: 600px;
-        transform: scale(var(--zoom, 1)) rotateX(var(--rotX, 60deg)) rotateZ(var(--rotZ, -45deg));
-        transform-style: preserve-3d;
-        transition: transform 0.3s ease-out;
-
-        background-color: #e0fbfc;
-        background-image:
-            linear-gradient(#99f6e4 1px, transparent 1px),
-            linear-gradient(90deg, #99f6e4 1px, transparent 1px);
-        background-size: 50px 50px;
-        border: 2px solid #5eead4;
-        border-radius: 4px;
-        box-shadow: 0 40px 80px rgba(0,0,0,0.10);
-    }
-
-    /* --- 4. The Building --- */
-    .building {
-        position: absolute;
-        width: 80px;
-        height: 80px;
-        transform-style: preserve-3d;
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
-        display: block;
-    }
-
-    .building:hover .face--roof {
-        filter: brightness(105%);
-    }
-    .building:hover .label {
-        background: #06b6d4;
-        color: #fff;
-    }
-    .building:hover .label .pts {
-        color: #e0f7fa;
-    }
-
-    /* --- 5. THE 6 FACES --- */
-    .face {
-        position: absolute;
-        /* This correctly hides the inside of the box */
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-    }
-
-    /* Floor */
-    .face--floor {
-        top: 0; left: 0;
-        width: 80px; height: 80px;
-        background-color: var(--accent, #94a3b8);
-        transform: translateZ(0px);
-    }
-
-    /* Roof */
-    .face--roof {
-        top: 0; left: 0;
-        width: 80px; height: 80px;
-        background-color: var(--accent, #ffffff);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: inset 0 0 10px rgba(255,255,255,0.5);
-        opacity: 0.9;
-        transform: translateZ(var(--h));
-    }
-
-    /* Front wall (Facing Viewer) */
-    .face--front {
-        top: auto; bottom: 0; left: 0;
-        width: 80px; height: var(--h);
-        background-color: #cbd5e1; /* Darker shade for lighting effect */
-        background-image: repeating-linear-gradient(to bottom, transparent, transparent 15px, rgba(255, 255, 255, 0.5) 15px, rgba(255, 255, 255, 0.5) 20px);
-        transform-origin: bottom;
-        transform: rotateX(-90deg);
-    }
-
-    /* Back wall (Hidden) */
-    .face--back {
-        top: 0; left: 0;
-        width: 80px; height: var(--h);
-        background-color: #f1f5f9;
-        transform-origin: top;
-        transform: rotateX(90deg);
-    }
-
-    /* Left wall (Facing Viewer) */
-    .face--left {
-        top: 0; left: 0;
-        width: var(--h); height: 80px;
-        background-color: #e2e8f0; /* Lighter shade for lighting effect */
-        background-image: repeating-linear-gradient(to left, transparent, transparent 15px, rgba(255, 255, 255, 0.5) 15px, rgba(255, 255, 255, 0.5) 20px);
-        transform-origin: left;
-        transform: rotateY(-90deg);
-    }
-
-    /* Right wall (Hidden) */
-    .face--right {
-        top: 0; left: auto; right: 0;
-        width: var(--h); height: 80px;
-        background-color: #f1f5f9;
-        transform-origin: right;
-        transform: rotateY(90deg);
-    }
-
-    /* --- Shadow on the ground --- */
-    .building-shadow {
-        position: absolute;
-        width: 80px;
-        height: 80px;
-        background: rgba(0, 0, 0, 0.08);
-        transform: translateZ(1px) translate(6px, 6px);
-        border-radius: 2px;
-        pointer-events: none;
-    }
-
-    /* --- 6. Floating Label on the Roof --- */
-    .label {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: max-content;
-        max-width: 120px;
-        text-align: center;
-        transform: translate(-50%, -50%) translateZ(calc(var(--h) + 30px)) rotateZ(var(--labelRotZ, 45deg)) rotateX(-60deg);
-        background: rgba(255, 255, 255, 0.95);
-        padding: 5px 12px;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 14px;
-        color: #1e293b;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
-        white-space: nowrap;
-        border: 1px solid #e2e8f0;
-        z-index: 100;
-    }
-
-    .label .pts {
-        display: block;
-        font-size: 12px;
-        font-weight: 600;
-        color: #334155;
-        margin-top: 2px;
-    }
-
-    /* --- Accent style for the top department (optional extra glow) --- */
-    .building--accent .face--roof {
-        box-shadow: 0 0 15px var(--accent);
-    }
-    .building--accent .label {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-    }
-    .building--accent .label .pts {
-        color: #e0f7fa;
-    }
-</style>
-
-<div class="dashboard-container" style="position: relative;">
-    <div class="status-indicator">
-        <span class="status-dot"></span>
-        {{ departments|length }} Departments Live
-    </div>
-
-    <div class="dashboard-header">
+    <div class="map-header">
+        <span class="map-live-badge">{{ departments|length }} Department{{ departments|length|pluralize }} Live</span>
         <h2>Campus Map</h2>
-        <p>Explore the 3D campus. The taller the building, the more points the department has!</p>
+        <p>Explore the 3D campus. The taller the building, the more points the department has.</p>
     </div>
 
-    <div class="scene">
-        <div class="campus-grid">
-
-            {% for dept in departments %}
-            <a href="{% url 'department_detail' dept.id %}"
-               class="building {% if dept.is_top %}building--accent{% endif %}"
-               style="--h: {{ dept.building_height }}px;
-                      --accent: {{ dept.color }};
-                      top: {{ dept.pos_top }}%;
-                      left: {{ dept.pos_left }}%;
-                      z-index: {{ dept.building_height }};">
-                <div class="building-shadow"></div>
-                <div class="face face--floor"></div>
-                <div class="face face--front"></div>
-                <div class="face face--back"></div>
-                <div class="face face--left"></div>
-                <div class="face face--right"></div>
-                <div class="face face--roof"></div>
-                <div class="label">
-                    {{ dept.name }}
-                    <span class="pts">{{ dept.total_points_display }} pts</span>
-                </div>
-            </a>
-            {% endfor %}
-
+    <div id="campus-map-wrapper">
+        <div id="campus-map-container">
+            <!-- Three.js Canvas will be appended here -->
         </div>
-    </div>
-
-    <div class="controls-panel">
-        <button class="control-btn" id="btn-zoom-in" title="Zoom In" style="font-size: 24px; font-weight: 300;">+</button>
-        <button class="control-btn" id="btn-zoom-out" title="Zoom Out" style="font-size: 24px; font-weight: 300;">&minus;</button>
-        <button class="control-btn" id="btn-rotate" title="Orbit/Rotate" style="font-size: 20px;">
-            &#x21bb;
-        </button>
+        <div class="map-controls">
+            <button id="zoom-in-btn" title="Zoom In">+</button>
+            <button id="zoom-out-btn" title="Zoom Out">−</button>
+            <button id="reset-view-btn" title="Reset View">↻</button>
+        </div>
     </div>
 </div>
 
+<!-- Include Three.js via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const grid = document.querySelector('.campus-grid');
-        const container = document.querySelector('.scene');
-        let currentZoom = 0.85;
-        let currentRotZ = -45;
+    document.addEventListener("DOMContentLoaded", function() {
+        const container = document.getElementById('campus-map-container');
         
-        function updateTransform() {
-            grid.style.setProperty('--zoom', currentZoom);
-            grid.style.setProperty('--rotZ', currentRotZ + 'deg');
-            grid.style.setProperty('--labelRotZ', (currentRotZ * -1) + 'deg');
+        // Setup the Scene
+        const scene = new THREE.Scene();
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        scene.background = new THREE.Color(isDark ? 0x1a2332 : 0xe8f4f8);
+
+        // Setup Camera
+        const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 1, 1000);
+        camera.position.set(70, 90, 130);
+
+        // Setup Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Enable OrbitControls (zoom, spin, pan)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05; // Prevent camera from dropping below ground
+        controls.minDistance = 40;
+        controls.maxDistance = 250;
+        controls.target.set(50, 0, 50);
+
+        // Zoom controls
+        document.getElementById('zoom-in-btn').addEventListener('click', function() {
+            camera.position.lerp(controls.target, 0.15);
+        });
+        document.getElementById('zoom-out-btn').addEventListener('click', function() {
+            const dir = camera.position.clone().sub(controls.target).normalize();
+            camera.position.add(dir.multiplyScalar(15));
+        });
+        document.getElementById('reset-view-btn').addEventListener('click', function() {
+            camera.position.set(70, 90, 130);
+            controls.target.set(50, 0, 50);
+            controls.update();
+        });
+
+        // Lighting — softer, more diffused
+        const ambientLight = new THREE.AmbientLight(0xffffff, isDark ? 0.4 : 0.75);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, isDark ? 0.4 : 0.6);
+        dirLight.position.set(80, 160, 80);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.top = 120;
+        dirLight.shadow.camera.bottom = -120;
+        dirLight.shadow.camera.left = -120;
+        dirLight.shadow.camera.right = 120;
+        scene.add(dirLight);
+
+        const fillLight = new THREE.DirectionalLight(isDark ? 0x1a2332 : 0xe8f4f8, 0.3);
+        fillLight.position.set(-50, 80, -50);
+        scene.add(fillLight);
+
+        // Ground — flat light surface with grid
+        const groundSize = 200;
+        const planeGeo = new THREE.PlaneGeometry(groundSize, groundSize);
+        const planeMat = new THREE.MeshPhongMaterial({
+            color: isDark ? 0x1e2a3a : 0xd8eff7,
+            shininess: 10,
+            transparent: true,
+            opacity: 0.7
+        });
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.rotation.x = -Math.PI / 2;
+        plane.receiveShadow = true;
+        plane.position.set(50, -0.1, 50);
+        scene.add(plane);
+
+        // Grid overlay
+        const gridHelper = new THREE.GridHelper(groundSize, 30,
+            isDark ? 0x2a3a4e : 0xb0dae8,
+            isDark ? 0x1e2d3d : 0xc8e6f0
+        );
+        gridHelper.position.set(50, 0, 50);
+        gridHelper.material.opacity = isDark ? 0.35 : 0.5;
+        gridHelper.material.transparent = true;
+        scene.add(gridHelper);
+
+        // Listen for dark mode toggle to update Three.js scene
+        document.querySelectorAll('.theme-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                setTimeout(function() {
+                    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    scene.background = new THREE.Color(dark ? 0x1a2332 : 0xe8f4f8);
+                    planeMat.color.set(dark ? 0x1e2a3a : 0xd8eff7);
+                    ambientLight.intensity = dark ? 0.4 : 0.75;
+                    dirLight.intensity = dark ? 0.4 : 0.6;
+                    gridHelper.material.opacity = dark ? 0.35 : 0.5;
+                }, 50);
+            });
+        });
+
+        // Dynamic Department Data passed from Django View
+        const departments = [
+            {% for d in departments %}
+            {
+                name: "{{ d.name|escapejs }}",
+                points: {{ d.total_points|default:0 }},
+                height: {{ d.building_height|default:30 }},
+                color: "{{ d.color|default:'#06b6d4' }}",
+                x: {{ d.pos_left|default:0 }},
+                z: {{ d.pos_top|default:0 }},
+                is_top: {% if d.is_top %}true{% else %}false{% endif %}
+            },
+            {% endfor %}
+        ];
+
+        // Create flat layered buildings for each department
+        departments.forEach(dept => {
+            const buildingHeight = dept.height / 3;
+            const layers = Math.max(2, Math.round(buildingHeight / 4));
+            const layerHeight = buildingHeight / layers;
+            const baseWidth = 14;
+            const baseDepth = 14;
+            const deptColor = new THREE.Color(dept.color);
+
+            const group = new THREE.Group();
+
+            for (let i = 0; i < layers; i++) {
+                const shrink = 1 - (i * 0.04);
+                const w = baseWidth * shrink;
+                const d = baseDepth * shrink;
+                const h = layerHeight;
+
+                const geo = new THREE.BoxGeometry(w, h, d);
+
+                // Gradient: darker at bottom, lighter at top
+                const t = i / (layers - 1 || 1);
+                const layerColor = deptColor.clone();
+                layerColor.lerp(new THREE.Color(0xffffff), t * 0.35);
+
+                const mat = new THREE.MeshPhongMaterial({
+                    color: layerColor,
+                    shininess: 30,
+                    transparent: true,
+                    opacity: 0.92,
+                    emissive: dept.is_top ? deptColor : new THREE.Color(0x000000),
+                    emissiveIntensity: dept.is_top ? 0.15 : 0
+                });
+
+                const box = new THREE.Mesh(geo, mat);
+                box.position.y = (i * layerHeight) + (layerHeight / 2) + 0.5;
+                box.castShadow = true;
+                box.receiveShadow = true;
+                group.add(box);
+
+                // Thin separator line between layers
+                if (i > 0) {
+                    const lineGeo = new THREE.BoxGeometry(w + 0.5, 0.3, d + 0.5);
+                    const lineMat = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.5
+                    });
+                    const line = new THREE.Mesh(lineGeo, lineMat);
+                    line.position.y = i * layerHeight + 0.5;
+                    group.add(line);
+                }
+            }
+
+            // Accent stripe on top
+            const topY = layers * layerHeight + 0.5;
+            const accentGeo = new THREE.BoxGeometry(baseWidth * 0.7, 0.6, baseDepth * 0.7);
+            const accentMat = new THREE.MeshPhongMaterial({
+                color: deptColor,
+                shininess: 60
+            });
+            const accent = new THREE.Mesh(accentGeo, accentMat);
+            accent.position.y = topY + 0.3;
+            accent.castShadow = true;
+            group.add(accent);
+
+            group.position.set(dept.x, 0, dept.z);
+            scene.add(group);
+
+            // Floating label sprite
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 140;
+            const ctx = canvas.getContext('2d');
+
+            // Draw rounded label background with subtle shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.12)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetY = 4;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+            ctx.beginPath();
+            ctx.roundRect(30, 10, 452, 120, 16);
+            ctx.fill();
+
+            // Left accent bar
+            ctx.shadowColor = 'transparent';
+            ctx.fillStyle = dept.color;
+            ctx.beginPath();
+            ctx.roundRect(30, 10, 8, 120, [16, 0, 0, 16]);
+            ctx.fill();
+
+            // Department name
+            ctx.fillStyle = '#1a2b3c';
+            ctx.font = 'bold 38px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(dept.name, 256, 52);
+
+            // Points
+            ctx.fillStyle = '#7b8fa0';
+            ctx.font = '600 30px Inter, sans-serif';
+            ctx.fillText(dept.points + ' pts', 256, 100);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.position.set(dept.x, topY + 10, dept.z);
+            sprite.scale.set(26, 7, 1);
+            scene.add(sprite);
+        });
+
+        // Handle Window Resizing smoothly
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            if (container) {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
         }
 
-        document.getElementById('btn-zoom-in').addEventListener('click', () => {
-            currentZoom = Math.min(currentZoom + 0.2, 2.5);
-            updateTransform();
-        });
-
-        document.getElementById('btn-zoom-out').addEventListener('click', () => {
-            currentZoom = Math.max(currentZoom - 0.2, 0.4);
-            updateTransform();
-        });
-
-        document.getElementById('btn-rotate').addEventListener('click', () => {
-            currentRotZ -= 90;
-            updateTransform();
-        });
-
-        // Mouse Wheel Zoom
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                currentZoom = Math.min(currentZoom + 0.1, 3.0);
-            } else {
-                currentZoom = Math.max(currentZoom - 0.1, 0.3);
-            }
-            updateTransform();
-        });
-
-        // Mouse Drag to Rotate
-        let isDragging = false;
-        let startX;
-
-        // Initialize variables
-        updateTransform();
-
-        container.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            container.style.cursor = 'grabbing';
-            // Disable grid transition during drag
-            grid.style.transition = 'none';
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const deltaX = e.clientX - startX;
-            startX = e.clientX;
-            // Adjust rotation speed depending on movement
-            currentRotZ += deltaX * 0.5;
-            updateTransform();
-        });
-
-        window.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                container.style.cursor = 'default';
-                // Re-enable smooth transitions for buttons
-                grid.style.transition = 'transform 0.3s ease-out';
-            }
-        });
-
-        window.addEventListener('mouseleave', () => {
-            if (isDragging) {
-                isDragging = false;
-                container.style.cursor = 'default';
-                grid.style.transition = 'transform 0.3s ease-out';
-            }
-        });
+        // Main animation spin loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
     });
 </script>
-{% endblock %}
 {% endblock %}

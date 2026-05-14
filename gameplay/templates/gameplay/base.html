@@ -1,67 +1,115 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Employee Portal</title>
+    <title>Prokevo Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Palette */
-            --bg-color: #F7FAFC;
+            /* Palette — Light Mode */
+            --bg-gradient: linear-gradient(135deg, #eef2e6 0%, #f6efe0 100%);
             --card-bg: #FFFFFF;
-            --primary-action: #3182CE;
-            --primary-hover: #2B6CB0;
-            --text-primary: #1A202C;
-            --text-secondary: #718096;
+            --primary-action: #11201d;
+            --primary-hover: #000000;
+            --text-primary: #11201d;
+            --text-secondary: #9ca3af;
             --semantic-success: #48BB78;
             --semantic-danger: #F56565;
-            --nav-bg: #1A202C;
-            --border-color: #EDF2F7;
+            --nav-bg: transparent;
+            --border-color: #e5e7eb;
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Playfair Display', serif;
+            --input-bg: #fff;
+            --logout-bg: white;
+            --logout-border: #d1d5db;
+            --logout-color: #4b5563;
+            --alert-bg: #eef2e6;
+            --alert-color: #1e5a40;
+            --alert-badge-bg: #1e5a40;
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            --card-bg: #1e2533;
+            --primary-action: #60a5fa;
+            --primary-hover: #93c5fd;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --semantic-success: #4ade80;
+            --semantic-danger: #f87171;
+            --nav-bg: transparent;
+            --border-color: #334155;
+            --input-bg: #1e293b;
+            --logout-bg: #1e293b;
+            --logout-border: #475569;
+            --logout-color: #cbd5e1;
+            --alert-bg: #1a2e23;
+            --alert-color: #86efac;
+            --alert-badge-bg: #166534;
         }
 
         body { 
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color); 
+            font-family: var(--font-sans);
+            background: var(--bg-gradient); 
             color: var(--text-primary);
             margin: 0; 
             padding: 0;
             line-height: 1.5;
+            min-height: 100vh;
         }
         
         /* Navigation Bar Styles */
         .navbar { 
             background: var(--nav-bg); 
-            padding: 16px 32px; 
+            padding: 24px 40px; 
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+        
         .navbar-links {
             display: flex;
-            gap: 24px;
+            gap: 32px;
             align-items: center;
         }
+        .navbar-brand {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-right: 24px;
+            font-size: 1.5rem;
+            text-decoration: none;
+        }
+        
         .navbar a { 
-            color: #E2E8F0; 
+            color: var(--text-secondary); 
             text-decoration: none; 
-            font-weight: 500; 
-            font-size: 1rem; 
+            font-weight: 700; 
+            font-size: 0.75rem; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             transition: color 0.2s;
         }
-        .navbar a:hover { color: var(--primary-action); }
+        .navbar a:hover, .navbar a.nav-active { color: var(--text-primary); }
         
         .navbar-right {
             display: flex;
-            gap: 20px;
+            gap: 24px;
             align-items: center;
         }
 
         .btn-primary {
             background-color: var(--primary-action);
-            color: white;
-            padding: 8px 16px;
+            color: white !important;
+            padding: 10px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             cursor: pointer;
             transition: background-color 0.2s;
             text-decoration: none;
@@ -69,16 +117,15 @@
         }
         .btn-primary:hover {
             background-color: var(--primary-hover);
-            color: white;
         }
 
         /* Card Styles */
         .card { 
             background: var(--card-bg); 
-            padding: 24px; 
+            padding: 32px; 
             margin-bottom: 24px; 
-            border-radius: 4px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); 
+            border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05); 
             border: none;
         }
         
@@ -86,32 +133,41 @@
         .form-container, .content-container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
 
         input[type=text], input[type=number], input[type=email], input[type=password], textarea, select { 
             width: 100%; 
-            padding: 10px 12px; 
+            padding: 12px 16px; 
             border: 1px solid var(--border-color); 
-            border-radius: 4px; 
+            border-radius: 8px; 
             box-sizing: border-box; 
             font-family: inherit;
             color: var(--text-primary);
-            margin-top: 8px;
-            margin-bottom: 16px;
+            margin-top: 6px;
+            margin-bottom: 20px;
             transition: border-color 0.2s;
+            background: var(--input-bg);
         }
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: var(--primary-action);
-            box-shadow: 0 0 0 1px var(--primary-action);
+            border-color: var(--text-primary);
         }
 
         button, input[type="submit"], input[type="button"], input[type="reset"] {
             cursor: pointer;
+            font-family: inherit;
         }
 
-        h1, h2, h3, h4 { color: var(--text-primary); margin-top: 0; }
+        h1, h2, h3, h4 { color: var(--text-primary); margin-top: 0; font-family: var(--font-serif); }
         p { color: var(--text-secondary); }
         
         .text-secondary { color: var(--text-secondary); font-size: 0.875rem; }
@@ -121,8 +177,9 @@
         .gamification-score {
             font-size: 2.5rem;
             font-weight: 800;
-            color: var(--primary-action);
+            color: var(--text-primary);
             line-height: 1;
+            font-family: var(--font-serif);
         }
         
         .list-item {
@@ -132,45 +189,150 @@
         .list-item:last-child {
             border-bottom: none;
         }
+        
+        .card-main-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+        
+        .card-subtitle {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* Dark mode toggle button */
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 1.3rem;
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            padding: 0;
+            line-height: 1;
+        }
+        .theme-toggle:hover {
+            transform: rotate(30deg) scale(1.1);
+            border-color: var(--text-secondary);
+        }
+
+        /* Smooth theme transition */
+        body, .navbar, .card, .schedule-card, input, textarea, select, button {
+            transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+
+        /* Dark mode: schedule-card and common page elements */
+        [data-theme="dark"] .schedule-card {
+            background: var(--card-bg) !important;
+            color: var(--text-primary);
+        }
+        [data-theme="dark"] .schedule-card h1,
+        [data-theme="dark"] .schedule-card h2,
+        [data-theme="dark"] .schedule-card h3,
+        [data-theme="dark"] .schedule-card h4,
+        [data-theme="dark"] .schedule-card strong {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] .schedule-card p,
+        [data-theme="dark"] .schedule-card span,
+        [data-theme="dark"] .schedule-card small,
+        [data-theme="dark"] .schedule-card li {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .card {
+            background: var(--card-bg) !important;
+        }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
+        
         <div class="navbar-links">
-            <a href="{% url 'dashboard' %}" style="font-weight: 700; color: white; margin-right: 12px; font-size: 1.2rem;">Portal</a>
-            <a href="{% url 'departments_page' %}">Departments</a>
-            <a href="{% url 'ideas_page' %}">Ideas</a>
-            <a href="{% url 'training_page' %}">Training</a> 
-            <a href="{% url 'problems_page' %}">Problems</a> 
-            <a href="{% url 'redeem_page' %}">Rewards</a>
+            <a href="{% url 'dashboard' %}" class="navbar-brand" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-serif); margin-right: 20px;">Prokevo</a>
+            {% block nav_links %}
+            <a href="{% url 'dashboard' %}" {% if active_tab == 'dashboard' %}class="nav-active"{% endif %}>DASHBOARD</a>
+            <a href="{% url 'departments_page' %}" {% if active_tab == 'departments' %}class="nav-active"{% endif %}>DEPARTMENTS</a>
+            <a href="{% url 'ideas_page' %}" {% if active_tab == 'ideas' %}class="nav-active"{% endif %}>IDEAS</a>
+            <a href="{% url 'training_page' %}" {% if active_tab == 'training' %}class="nav-active"{% endif %}>TRAINING</a> 
+            <a href="{% url 'problems_page' %}" {% if active_tab == 'problems' %}class="nav-active"{% endif %}>PROBLEMS</a> 
+            <a href="{% url 'redeem_page' %}" {% if active_tab == 'redeem' %}class="nav-active"{% endif %}>REWARDS</a>
+            <a href="{% url 'analytics_page' %}" {% if active_tab == 'analytics' %}class="nav-active"{% endif %}>ANALYTICS</a>
             
             {% if user.is_superuser %}
-            <select id="tenantSwitcher" style="margin-left: 20px; margin-top: 0; margin-bottom: 0; padding: 6px 12px; border-radius: 4px; background: #2D3748; color: white; border: 1px solid #4A5568; width: auto;">
-                <option value="">-- Select Org --</option>
+            <select id="tenantSwitcher" style="margin-left: 10px; margin-top: 0; margin-bottom: 0; padding: 4px 10px; border-radius: 6px; background: white; color: var(--text-primary); border: 1px solid var(--border-color); width: auto; font-size: 0.75rem;">
+                <option value="">Default</option>
                 {% for tenant in tenants %}
                     <option value="{{ tenant.subdomain }}" {% if active_tenant and active_tenant.id == tenant.id %}selected{% endif %}>{{ tenant.name }}</option>
                 {% endfor %}
             </select>
             {% endif %}
+            {% endblock nav_links %}
         </div>
         
-        <div class="navbar-right">
+        <div class="navbar-right" style="font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 16px;">
         {% if user.is_authenticated %}
             {% if request.tenant and request.user.id == request.tenant.tenant_admin_id or request.user.is_superuser %}
-                <a href="{% url 'company_admin_dashboard' %}" style="color: #F6AD55;">&#9881;&#65039; Admin</a>
+                <a href="{% url 'company_admin_dashboard' %}" style="color: #4b5563; text-transform: uppercase;">⚙ ADMIN</a>
             {% endif %}
-            <a href="{% url 'profile_page' %}">&#128100; Profile</a>
-            <form action="{% url 'logout' %}" method="post" style="margin: 0; display: inline;">
+            <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">🌙</button>
+            <a href="{% url 'alerts_page' %}" style="display:flex; align-items:center; gap: 6px; background: var(--alert-bg); color: var(--alert-color); padding: 6px 12px; border-radius: 20px; font-weight: 700; text-transform: uppercase;">
+                🔔 ALERTS {% if alert_count > 0 %}<span style="background: var(--alert-badge-bg); color: white; border-radius: 50%; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; padding: 0 4px;">{{ alert_count }}</span>{% endif %}
+            </a>
+            <a href="{% url 'profile_page' %}" style="color: var(--text-secondary); text-transform: uppercase;">👤 PROFILE</a>
+            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
                 {% csrf_token %}
-                <button type="submit" style="background: none; border: none; color: #E2E8F0; font-weight: 500; font-size: 1rem; cursor: pointer; padding: 0;">Logout</button>
+                <button type="submit" style="background: var(--logout-bg); border: 1px solid var(--logout-border); color: var(--logout-color); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; padding: 6px 14px; border-radius: 6px;">LOGOUT</button>
             </form>
         {% else %}
-            <a href="{% url 'login' %}">Login</a>
-            <a class="btn-primary" href="{% url 'signup' %}">Sign Up</a>
+            <button class="theme-toggle" id="themeToggleGuest" title="Toggle dark/light mode">🌙</button>
+            <a href="{% url 'login' %}" style="color: var(--text-secondary); text-transform: uppercase; font-weight: 700; font-size: 0.8rem;">LOGIN</a>
+            <a href="{% url 'signup' %}" style="background: var(--primary-action); color: white; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">SIGN UP</a>
         {% endif %}
         </div>
+
     </nav>
+
+    {% if messages %}
+    <div style="max-width: 900px; margin: 0 auto; padding: 8px 20px;">
+        {% for message in messages %}
+        <div class="alert-msg alert-{{ message.tags }}" style="
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            {% if message.tags == 'success' %}
+                background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;
+            {% elif message.tags == 'error' %}
+                background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;
+            {% elif message.tags == 'info' %}
+                background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;
+            {% else %}
+                background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+            {% endif %}
+        ">
+            <span>{{ message }}</span>
+            <span onclick="this.parentElement.style.display='none'" style="cursor:pointer; font-size: 1.2em; line-height: 1; margin-left: 16px;">✕</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% block container %}
     <div class="content-container">
         {% block content %}
@@ -179,16 +341,46 @@
     {% endblock %}
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const switcher = document.getElementById('tenantSwitcher');
-            if (!switcher) return;
+        // ── Dark / Light Mode Toggle ──
+        (function() {
+            const saved = localStorage.getItem('prokevo-theme');
+            if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
 
-            // Handle user switching tenant manually
-            switcher.addEventListener('change', function(e) {
-                const url = new URL(window.location.href);
-                url.searchParams.set('tenant', e.target.value);
-                window.location.href = url.toString();
+        document.addEventListener("DOMContentLoaded", function() {
+            // Theme toggle
+            function applyThemeIcon() {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                document.querySelectorAll('.theme-toggle').forEach(btn => {
+                    btn.textContent = isDark ? '☀️' : '🌙';
+                    btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+                });
+            }
+            applyThemeIcon();
+
+            document.querySelectorAll('.theme-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    if (isDark) {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem('prokevo-theme', 'light');
+                    } else {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('prokevo-theme', 'dark');
+                    }
+                    applyThemeIcon();
+                });
             });
+
+            // Tenant switcher
+            const switcher = document.getElementById('tenantSwitcher');
+            if (switcher) {
+                switcher.addEventListener('change', function(e) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tenant', e.target.value);
+                    window.location.href = url.toString();
+                });
+            }
         });
 
         // Intercept native fetch API to append headers
@@ -201,7 +393,6 @@
                 if (!config) config = {};
                 if (!config.headers) config.headers = {};
                 
-                // Only inject if it's an object (handles Headers object wrapping if needed)
                 if (config.headers instanceof Headers) config.headers.append('X-Tenant-Id', activeTenantId);
                 else config.headers['X-Tenant-Id'] = activeTenantId;
             }

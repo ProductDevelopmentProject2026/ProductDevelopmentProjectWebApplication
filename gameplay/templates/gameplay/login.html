@@ -1,30 +1,17 @@
 {% extends 'gameplay/base.html' %}
+{% block nav_links %}{% endblock %}
+
 {% block content %}
-<style>
-    .schedule-card {
-        border: none;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-        border-radius: 12px;
-        padding: 40px;
-        background: #fff;
-        margin-bottom: 40px;
-    }
-    .schedule-title {
-        color: #4b5563;
-        font-size: 1.4rem;
-        font-weight: 700;
-        margin-bottom: 25px;
-        margin-top: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-</style>
-<div class="schedule-card" style="max-width: 400px; margin: auto;">
-    <h2 class="schedule-title">Employee Login</h2>
+<div class="card" style="max-width: 480px; margin: 40px auto; padding: 48px;">
+    <span class="card-intro-text">WELCOME BACK</span>
+    <h2 class="card-main-title">Sign in to Prokevo</h2>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" style="background: #2c3e50; color: white; border: none; padding: 10px 20px; width: 100%; border-radius: 5px;">Login</button>
+        <button type="submit" class="btn-primary" style="width: 100%; border-radius: 8px; padding: 14px; margin-top: 16px; font-size: 0.875rem;">Login</button>
     </form>
+    <p style="text-align: center; margin-top: 24px; font-size: 0.875rem;">
+        Don't have an account? <a href="{% url 'signup' %}" style="color: var(--text-primary); font-weight: 600;">Sign up</a>
+    </p>
 </div>
 {% endblock %}
