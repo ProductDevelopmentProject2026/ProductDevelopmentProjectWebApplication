@@ -97,7 +97,7 @@ class UserRegisterForm(UserCreationForm):
 
     email = forms.EmailField(
         required=True, 
-        help_text="Required. Please enter a valid email address."
+        help_text="Required. This will also be your login username."
     )
     
     department = forms.ModelChoiceField(
@@ -108,7 +108,30 @@ class UserRegisterForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = UserCreationForm.Meta.fields + ('first_name', 'last_name', 'email',)
+        fields = ('first_name', 'last_name', 'email',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hide the username field — we use email as the username
+        if 'username' in self.fields:
+            del self.fields['username']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Set username from email so parent validation passes
+        email = cleaned_data.get('email', '')
+        if email:
+            self.cleaned_data['username'] = email
+            self.instance.username = email
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = self.cleaned_data.get('email', '')
+        user.email = self.cleaned_data.get('email', '')
+        if commit:
+            user.save()
+        return user
 
 class ProblemForm(forms.ModelForm):
     class Meta:

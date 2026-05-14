@@ -7,7 +7,21 @@
     <h2 class="card-main-title">Sign in to Prokevo</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        {% if form.errors %}
+        <div style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; font-weight: 600;">
+            Please enter a correct email and password.
+        </div>
+        {% endif %}
+        <p style="margin-bottom: 16px;">
+            <label for="id_username" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.03em;">Email</label>
+            <input type="text" name="username" id="id_username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" placeholder="your@email.com" required
+                style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; background: var(--input-bg, #fff); color: var(--text-primary);">
+        </p>
+        <p style="margin-bottom: 8px;">
+            <label for="id_password" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.03em;">Password</label>
+            <input type="password" name="password" id="id_password" autocomplete="current-password" required
+                style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; background: var(--input-bg, #fff); color: var(--text-primary);">
+        </p>
         <button type="submit" class="btn-primary" style="width: 100%; border-radius: 8px; padding: 14px; margin-top: 16px; font-size: 0.875rem;">Login</button>
     </form>
     <p style="text-align: center; margin-top: 24px; font-size: 0.875rem;">
