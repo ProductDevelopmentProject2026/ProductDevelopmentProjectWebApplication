@@ -203,6 +203,7 @@ def dashboard(request):
     })
 
 # 2. Departments Page
+@login_required
 def departments_page(request):
     if not request.tenant:
         messages.info(request, "Please select an organization to view departments.")
@@ -215,6 +216,7 @@ def departments_page(request):
     return render(request, 'gameplay/departments.html', {'departments': all_departments})
 
 # 3. Ideas Page (Form + List)
+@login_required
 def ideas_page(request):
     if request.method == 'POST':
         if not request.tenant:
@@ -353,6 +355,7 @@ def profile_page(request):
     })
 
 # 5. Training Page (List + Create)
+@login_required
 def training_page(request):
     if request.method == 'POST':
         if not request.tenant:
@@ -521,11 +524,11 @@ def register_page(request):
         logger.warning(f"Invite token '{token}' failed validation.")
         invite = None
 
-    if not invite:
-        messages.error(request, "Invalid, expired, or missing invitation.")
+    if not invite and token:
+        messages.error(request, "Invalid or expired invitation token.")
         if 'invite_token' in request.session:
             del request.session['invite_token']
-        return redirect('login')
+        # Do not redirect, just allow normal open registration
 
     if invite:
         # Force the tenant context to match the invite for form rendering and validation
