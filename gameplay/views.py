@@ -1217,7 +1217,7 @@ def analytics_page(request):
         messages.error(request, "Organization must be selected.")
         return redirect('dashboard')
         
-    from datetime import timedelta, date
+    from datetime import timedelta, datetime
     from django.db.models import Sum, Count
     from django.utils import timezone
     import json
@@ -1260,7 +1260,7 @@ def analytics_page(request):
     while target_month < 1:
         target_month += 12
         target_year -= 1
-    curr_date = date(target_year, target_month, 1)
+    curr_date = timezone.make_aware(datetime(target_year, target_month, 1))
     
     for _ in range(12):
         month_str = curr_date.strftime("%b %y")
@@ -1271,7 +1271,7 @@ def analytics_page(request):
         if next_m > 12:
             next_m = 1
             next_y += 1
-        next_date = date(next_y, next_m, 1)
+        next_date = timezone.make_aware(datetime(next_y, next_m, 1))
         
         # log count
         l_cnt = ActionLog.objects.filter(
