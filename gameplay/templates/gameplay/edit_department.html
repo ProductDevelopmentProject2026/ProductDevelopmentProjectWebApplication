@@ -59,6 +59,7 @@
         editorContainer.id = 'quill-editor';
         textarea.parentNode.insertBefore(editorContainer, textarea);
         textarea.style.display = 'none';
+        textarea.removeAttribute('required');
 
         var quill = new Quill('#quill-editor', {
           theme: 'snow',
