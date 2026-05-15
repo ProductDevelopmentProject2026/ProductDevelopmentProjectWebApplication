@@ -20,200 +20,95 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .custom-form-group {
-            margin-bottom: 22px;
-        }
-        .custom-form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #374151;
-            font-size: 0.95rem;
-        }
-        .input-with-icon {
-            position: relative;
-        }
-        .input-with-icon svg {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6b7280;
-            width: 18px;
-            height: 18px;
-            pointer-events: none;
-        }
-        .input-with-icon input {
-            padding-left: 42px !important;
-            width: 100%;
-            height: 46px;
-            padding-top: 12px;
-            padding-bottom: 12px;
-            margin: 0 !important;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            box-sizing: border-box;
-            background-color: #f9fafb;
-            font-size: 0.95rem;
-            color: #111827;
-            transition: all 0.2s;
-        }
-        .input-with-icon input:focus {
-            border-color: #4a148c;
-            background-color: #fff;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.1);
-        }
-        .custom-form-group textarea {
-            width: 100%;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 16px;
-            box-sizing: border-box;
-            min-height: 120px;
-            margin-top: 0 !important;
-            font-size: 0.95rem;
-            resize: vertical;
-        }
-        .custom-form-group textarea:focus {
-            border-color: #4a148c;
-            outline: none;
-        }
-        .drag-drop-zone {
-            border: 2px dashed #cbd5e1;
-            border-radius: 8px;
-            padding: 25px;
-            text-align: center;
-            background-color: #f8fafc;
-            color: #475569;
-            cursor: pointer;
-            flex: 1;
-            transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .drag-drop-zone:hover {
-            background-color: #f1f5f9;
-            border-color: #94a3b8;
-        }
-        .file-input-wrapper {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .file-input-wrapper input[type="file"] {
-            display: none;
-        }
-        .fake-file-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            background-color: #f9fafb;
-            color: #6b7280;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .fake-file-input svg {
-            width: 20px;
-            height: 20px;
-            color: #d1d5db;
-        }
-        .choose-file-btn {
-            background-color: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 12px 20px;
-            color: #374151;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .choose-file-btn:hover {
-            background-color: #e5e7eb;
-        }
-        .submit-btn {
-            background: linear-gradient(135deg, #4a148c, #311b92);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            font-size: 1.05rem;
-            border-radius: 30px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: 600;
-            margin-top: 15px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(74, 20, 140, 0.3);
-        }
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(74, 20, 140, 0.4);
-        }
+        .custom-form-group { margin-bottom: 22px; }
+        .custom-form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #374151; font-size: 0.95rem; }
+        .input-with-icon { position: relative; }
+        .input-with-icon svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6b7280; width: 18px; height: 18px; pointer-events: none; }
+        .input-with-icon input { padding-left: 42px !important; width: 100%; height: 46px; padding-top: 12px; padding-bottom: 12px; margin: 0 !important; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; background-color: #f9fafb; font-size: 0.95rem; color: #111827; transition: all 0.2s; }
+        .input-with-icon input:focus { border-color: #4a148c; background-color: #fff; outline: none; box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.1); }
+        .custom-form-group textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; box-sizing: border-box; min-height: 120px; margin-top: 0 !important; font-size: 0.95rem; resize: vertical; }
+        .custom-form-group textarea:focus { border-color: #4a148c; outline: none; }
+        .drag-drop-zone { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 25px; text-align: center; background-color: #f8fafc; color: #475569; cursor: pointer; flex: 1; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+        .drag-drop-zone:hover { background-color: #f1f5f9; border-color: #94a3b8; }
+        .file-input-wrapper { flex: 1; display: flex; align-items: center; gap: 15px; }
+        .file-input-wrapper input[type="file"] { display: none; }
+        .fake-file-input { flex: 1; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; background-color: #f9fafb; color: #6b7280; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
+        .choose-file-btn { background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px 20px; color: #374151; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .choose-file-btn:hover { background-color: #e5e7eb; }
+        .submit-btn { background: linear-gradient(135deg, #4a148c, #311b92); color: white; border: none; padding: 14px 24px; font-size: 1.05rem; border-radius: 30px; cursor: pointer; width: 100%; font-weight: 600; margin-top: 15px; transition: all 0.3s; box-shadow: 0 4px 10px rgba(74, 20, 140, 0.3); }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(74, 20, 140, 0.4); }
+        .training-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+        .training-table th { background: #f3f4f6; color: #374151; padding: 14px 18px; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; border-bottom: 2px solid #e5e7eb; text-align: left; }
+        .training-table td { padding: 18px 18px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: middle; font-size: 0.95rem; }
+        .training-table tr:hover td { background: #fafbfc; }
+        .new-training-btn { background: linear-gradient(135deg, #4a148c, #311b92); color: white; border: none; padding: 10px 22px; border-radius: 25px; font-weight: 600; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 3px 10px rgba(74,20,140,0.25); }
+        .new-training-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(74,20,140,0.35); }
+        .training-form-panel { display: none; animation: slideDown 0.3s ease; }
+        .training-form-panel.active { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
-    <div class="schedule-card">
-        <h2 class="schedule-title">SCHEDULE A TRAINING</h2>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="custom-form-group">
-                <label>Topic:</label>
-                <div class="input-with-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    {{ form.title }}
-                </div>
-            </div>
-            
-            <div style="display: flex; gap: 20px; align-items: flex-start;" class="custom-form-group">
-                <div style="flex: 1;">
-                    <label>When?</label>
-                    <div class="input-with-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        {{ form.date_time }}
-                    </div>
-                </div>
-                <div style="flex: 1;">
-                    <label>Where?</label>
-                    <div class="input-with-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        {{ form.location }}
-                    </div>
-                </div>
-            </div>
 
-            <div class="custom-form-group">
-                <label>Description:</label>
-                {{ form.description }}
-            </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h1 style="margin: 0;">Learning & training</h1>
+            <p style="color: #6b7280; margin-top: 5px;">Course-style sessions with posters, video, curriculum, and a checkout-style enroll panel — tap <strong>+ New training</strong> to publish.</p>
+        </div>
+        <button class="new-training-btn" onclick="document.getElementById('trainingFormPanel').classList.toggle('active'); this.querySelector('span').textContent = document.getElementById('trainingFormPanel').classList.contains('active') ? '✕ Close' : '+ New training';">
+            <span>+ New training</span>
+        </button>
+    </div>
 
-            <div class="custom-form-group">
-                <label>Cover Photo (Optional):</label>
-                <div style="display: flex; gap: 20px; align-items: stretch;">
-                    <div class="drag-drop-zone" onclick="document.getElementById('id_image').click();">
-                        <svg style="width:24px;height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Drag & Drop or Click to Upload
+    <div id="trainingFormPanel" class="training-form-panel">
+        <div class="schedule-card" style="border-left: 4px solid #4a148c;">
+            <h2 class="schedule-title">SCHEDULE A TRAINING</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="custom-form-group">
+                    <label>Topic:</label>
+                    <div class="input-with-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        {{ form.title }}
                     </div>
-                    <div class="file-input-wrapper">
-                        <div class="fake-file-input" onclick="document.getElementById('id_image').click();">
-                            <span id="fileNameDisplay" style="flex:1; overflow:hidden; text-overflow:ellipsis;">No file selected</span>
+                </div>
+                <div style="display: flex; gap: 20px; align-items: flex-start;" class="custom-form-group">
+                    <div style="flex: 1;">
+                        <label>When?</label>
+                        <div class="input-with-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            {{ form.date_time }}
                         </div>
-                        <button type="button" class="choose-file-btn" onclick="document.getElementById('id_image').click();">Choose File</button>
-                        <div style="display:none;">{{ form.image }}</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Where?</label>
+                        <div class="input-with-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            {{ form.location }}
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <button type="submit" class="submit-btn">
-                Add Training
-            </button>
-        </form>
+                <div class="custom-form-group">
+                    <label>Description:</label>
+                    {{ form.description }}
+                </div>
+                <div class="custom-form-group">
+                    <label>Cover Photo (Optional):</label>
+                    <div style="display: flex; gap: 20px; align-items: stretch;">
+                        <div class="drag-drop-zone" onclick="document.getElementById('id_image').click();">
+                            <svg style="width:24px;height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Drag & Drop or Click to Upload
+                        </div>
+                        <div class="file-input-wrapper">
+                            <div class="fake-file-input" onclick="document.getElementById('id_image').click();">
+                                <span id="fileNameDisplay" style="flex:1; overflow:hidden; text-overflow:ellipsis;">No file selected</span>
+                            </div>
+                            <button type="button" class="choose-file-btn" onclick="document.getElementById('id_image').click();">Choose File</button>
+                            <div style="display:none;">{{ form.image }}</div>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Add Training</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -234,130 +129,121 @@
         });
     </script>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 20px;">
-        <h1 style="margin: 0;">🎓 Upcoming Sessions</h1>
-        <form method="get" style="display: flex; gap: 10px;">
-            <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search trainings..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 250px;">
-            <button type="submit" style="background: #9b59b6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Search</button>
+    <!-- Explore trainings -->
+    <div class="schedule-card">
+        <h2 class="schedule-title">Explore trainings</h2>
+        <p style="color: #6b7280; margin-top: -15px; margin-bottom: 20px;">Enroll like a Udemy learner — unlock lessons and quizzes once you register.</p>
+        <form method="get" style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search for anything..." style="flex:1; padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 8px;">
+            <button type="submit" style="background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Search</button>
             {% if search_query %}
-                <a href="{% url 'training_page' %}" style="padding: 8px 15px; text-decoration: none; color: #555; background: #eee; border-radius: 4px;">Clear</a>
+                <a href="{% url 'training_page' %}" style="padding: 10px 15px; text-decoration: none; color: #555; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center;">Clear</a>
             {% endif %}
         </form>
-    </div>
-    
-    {% for training in trainings %}
-    <div class="schedule-card" style="padding: 30px; margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-            
-            <div style="flex-grow: 1; padding-right: 20px;">
-                <h2 style="margin-top: 0; margin-bottom: 5px; color: #2c3e50;">{{ training.title }}</h2>
-                
-                {% if training.image %}
-                    <img src="{{ training.image.url }}" alt="Training Cover" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 10px; margin-bottom: 10px; object-fit: cover; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                {% endif %}
 
-                <small style="color: #6b7280; display: block; margin-top: 5px; margin-bottom: 5px; font-weight: 500;">
-                    <strong style="color: #4a148c; font-weight: 600;">{{ training.location }}</strong> | 
-                    {{ training.date_time|date:"D, d M @ H:i" }} | 
-                    By {{ training.organizer.username }}
-                </small>
-                <div style="margin-top: 15px; color: #374151; font-size: 0.95rem; line-height: 1.6;">{{ training.description|safe }}</div>
-                
-                <div style="margin-top: 20px; font-size: 0.9em; color: #666; background: #f9fafb; padding: 10px 15px; border-radius: 6px; display: inline-block;">
-                    <strong>Who is coming?</strong> 
-                    {% for user in training.attendees.all %}
-                        {{ user.username }}{% if not forloop.last %}, {% endif %}
-                    {% empty %}
-                        No one yet.
+        <!-- Training table -->
+        {% if trainings %}
+        <div style="overflow-x: auto;">
+            <table class="training-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;"></th>
+                        <th>Training</th>
+                        <th>Organizer</th>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Enrolled</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for training in trainings %}
+                    <tr style="cursor: pointer;" onclick="document.getElementById('detail-{{ training.id }}').style.display = document.getElementById('detail-{{ training.id }}').style.display === 'none' ? 'table-row' : 'none';">
+                        <td>
+                            {% if training.image %}
+                            <img src="{{ training.image.url }}" style="width: 56px; height: 56px; border-radius: 8px; object-fit: cover;">
+                            {% else %}
+                            <div style="width: 56px; height: 56px; border-radius: 8px; background: linear-gradient(135deg, #4a148c, #7c3aed); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.95em;">{{ training.title|truncatechars:2 }}</div>
+                            {% endif %}
+                        </td>
+                        <td><strong style="color: #111827; font-size: 1.05em;">{{ training.title }}</strong></td>
+                        <td>{{ training.organizer.username }}</td>
+                        <td style="white-space: nowrap;">{{ training.date_time|date:"D, d M @ H:i" }}</td>
+                        <td>
+                            <span style="display: inline-flex; align-items: center; gap: 4px;">
+                                <svg style="width:14px; height:14px; color: #4a148c;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                {{ training.location }}
+                            </span>
+                        </td>
+                        <td><strong>{{ training.attendees.count }}</strong></td>
+                        <td onclick="event.stopPropagation();">
+                            {% if request.user in training.attendees.all %}
+                                <a href="{% url 'register_training' training.id %}" style="text-decoration: none;">
+                                    <button style="background: white; border: 1px solid #ef4444; color: #ef4444; border-radius: 8px; padding: 8px 18px; font-weight: 600; cursor: pointer; font-size: 0.9em;">Leave</button>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'register_training' training.id %}" style="text-decoration: none;">
+                                    <button style="background: #10b981; border: none; color: white; border-radius: 8px; padding: 8px 18px; font-weight: 600; cursor: pointer; font-size: 0.9em;">Enroll now</button>
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <!-- Expandable detail row -->
+                    <tr id="detail-{{ training.id }}" style="display: none;">
+                        <td colspan="7" style="padding: 20px 30px; background: #fafbfc; border-left: 3px solid #4a148c;">
+                            {% if training.image %}
+                                <img src="{{ training.image.url }}" alt="Training Cover" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 15px; object-fit: cover; display: block;">
+                            {% endif %}
+                            <div style="color: #374151; line-height: 1.6; margin-bottom: 15px;">{{ training.description|safe }}</div>
+                            <div style="font-size: 0.9em; color: #666; background: #f3f4f6; padding: 10px 15px; border-radius: 6px; display: inline-block; margin-bottom: 15px;">
+                                <strong>Roster:</strong>
+                                {% for user in training.attendees.all %}{{ user.username }}{% if not forloop.last %}, {% endif %}{% empty %}Be the first to join this cohort.{% endfor %}
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <strong style="color: #4b5563;">📚 Curriculum:</strong>
+                                <ul style="margin-top: 8px; padding-left: 20px;">
+                                    {% for lesson in training.lessons.all %}
+                                    <li style="margin-bottom: 6px;">
+                                        {% if request.user in training.attendees.all or request.user == training.organizer %}
+                                            <a href="{% url 'view_lesson' lesson.id %}" style="color: #3498db; font-weight: 600;">Lesson {{ lesson.order }}: {{ lesson.title }}</a>
+                                        {% else %}
+                                            <span style="color: #9ca3af;">Lesson {{ lesson.order }}: {{ lesson.title }} 🔒</span>
+                                        {% endif %}
+                                    </li>
+                                    {% empty %}
+                                    <li style="color: #9ca3af; font-style: italic;">No lessons yet.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% if request.user == training.organizer %}
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <a href="{% url 'manage_lessons' training.id %}"><button style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; font-weight: 500; cursor: pointer;">Manage Lessons</button></a>
+                                <a href="{% url 'add_question' training.id %}"><button style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; font-weight: 500; cursor: pointer;">Manage Quiz</button></a>
+                            </div>
+                            {% endif %}
+                            {% if request.user in training.attendees.all and training.questions.exists %}
+                            <div style="margin-top: 10px;">
+                                <a href="{% url 'take_quiz' training.id %}"><button style="background: #4a148c; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">Take Quiz</button></a>
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
                     {% endfor %}
-                </div>
-
-                <div style="margin-top: 25px; background: #fdfdfd; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <strong style="color: #4b5563; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                        <svg style="width:20px;height:20px;color:#4a148c;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                        Course Curriculum:
-                    </strong>
-                    <ul style="margin-top: 15px; padding-left: 20px; color: #4b5563;">
-                        {% for lesson in training.lessons.all %}
-                            <li style="margin-bottom: 8px;">
-                                {% if request.user in training.attendees.all or request.user == training.organizer %}
-                                    <a href="{% url 'view_lesson' lesson.id %}" style="text-decoration: none; color: #3498db; font-weight: 600; transition: color 0.2s;">
-                                        Lesson {{ lesson.order }}: {{ lesson.title }}
-                                    </a>
-                                {% else %}
-                                    <span style="color: #9ca3af;">Lesson {{ lesson.order }}: {{ lesson.title }} ðŸ”’ <span style="font-size: 0.85em;">(Register to view)</span></span>
-                                {% endif %}
-                            </li>
-                        {% empty %}
-                            <li style="color: #9ca3af; font-style: italic;">No lessons uploaded yet.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-            <div style="text-align: center; min-width: 150px; display: flex; flex-direction: column; align-items: center; border-left: 1px solid #f3f4f6; padding-left: 25px;">
-                <div style="margin-bottom: 15px;">
-                    <span style="font-size: 2.8em; font-weight: 800; color: #111827; line-height: 1;">
-                        {{ training.attendees.count }}
-                    </span>
-                    <br>
-                    <small style="color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem;">Registered</small>
-                </div>
-
-                <a href="{% url 'register_training' training.id %}" style="text-decoration: none; width: 100%; margin-bottom: 15px;">
-                    {% if request.user in training.attendees.all %}
-                        <button style="background: white; border: 1px solid #ef4444; color: #ef4444; border-radius: 6px; padding: 10px 0; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.2s;">
-                            Cancel Registration
-                        </button>
-                    {% else %}
-                        <button style="background: #10b981; border: none; color: white; border-radius: 6px; padding: 10px 0; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);">
-                            Register Now
-                        </button>
-                    {% endif %}
-                </a>
-
-                {% if request.user == training.organizer %}
-                    <hr style="width: 100%; border: 0; border-top: 1px solid #e5e7eb; margin: 10px 0;">
-                    
-                    <a href="{% url 'manage_lessons' training.id %}" style="display: block; margin-bottom: 10px; width: 100%;">
-                        <button style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 8px 0; border-radius: 6px; font-weight: 500; cursor: pointer; width: 100%; transition: all 0.2s; font-size: 0.9rem;">
-                            Manage Lessons
-                        </button>
-                    </a>
-                    <a href="{% url 'add_question' training.id %}" style="display: block; margin-bottom: 10px; width: 100%;">
-                        <button style="background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; padding: 8px 0; border-radius: 6px; font-weight: 500; cursor: pointer; width: 100%; transition: all 0.2s; font-size: 0.9rem;">
-                            Manage Quiz
-                        </button>
-                    </a>
-                {% endif %}
-
-                {% if request.user in training.attendees.all and training.questions.exists %}
-                    <a href="{% url 'take_quiz' training.id %}" style="display: block; width: 100%;">
-                        <button style="background: #4a148c; color: white; border: none; padding: 10px 0; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.2s; box-shadow: 0 2px 4px rgba(74, 20, 140, 0.2);">
-                            Take Quiz
-                        </button>
-                    </a>
-                {% endif %}
-            </div>
-
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <div style="text-align: center; color: #6b7280; padding: 40px;">
+            <p style="font-size: 1.1rem;">No upcoming trainings. Be the first to schedule one!</p>
+        </div>
+        {% endif %}
     </div>
-    {% empty %}
-        <div class="schedule-card" style="text-align: center; color: #6b7280; padding: 50px;">
-            <svg style="width:48px;height:48px;margin:0 auto 15px auto;color:#d1d5db;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-            <p style="font-size: 1.1rem; margin: 0;">No upcoming trainings. Be the first to schedule one!</p>
-        </div>
-    {% endfor %}
 
 {% endblock %}
 {% block extra_js %}
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
 <style>
-  #quill-editor {
-    min-height: 250px;
-    font-size: 1rem;
-    font-family: inherit;
-  }
+  #quill-editor { min-height: 250px; font-size: 1rem; font-family: inherit; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill-blot-formatter@1.0.5/dist/quill-blot-formatter.min.js"></script>
@@ -370,7 +256,6 @@
         editorContainer.id = 'quill-editor';
         textarea.parentNode.insertBefore(editorContainer, textarea);
         textarea.style.display = 'none';
-
         var quill = new Quill('#quill-editor', {
           theme: 'snow',
           modules: {
@@ -383,24 +268,13 @@
             ]
           }
         });
-
-        // Load existing content
         quill.root.innerHTML = textarea.value;
-
-        // Sync before submit
         var form = textarea.closest('form');
-        form.addEventListener('submit', function() {
-          textarea.value = quill.root.innerHTML;
-        });
-
-        // Allow easy deletion of images by clicking and selecting them
+        form.addEventListener('submit', function() { textarea.value = quill.root.innerHTML; });
         quill.root.addEventListener('click', function(ev) {
             if (ev.target && ev.target.tagName === 'IMG') {
                 let blot = Quill.find(ev.target);
-                if (blot) {
-                    let index = quill.getIndex(blot);
-                    quill.setSelection(index, 1);
-                }
+                if (blot) { let index = quill.getIndex(blot); quill.setSelection(index, 1); }
             }
         });
     }

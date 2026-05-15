@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg, Q
-from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, Invite, Tenant, ActionLog
+from .models import Department, Idea, IdeaCategory, Profile, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, Invite, Tenant, ActionLog, PointSettings, Badge, BADGE_DEFINITIONS
 from .forms import IdeaForm, TrainingForm, QuestionForm, LessonForm, UserRegisterForm, ProblemForm, SolutionForm, EmployeeEditForm, DepartmentForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -19,6 +19,55 @@ import uuid
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def get_point_settings(tenant):
+    """Get or create the point settings for a tenant."""
+    if not tenant:
+        # Return default values
+        class Defaults:
+            idea_accepted = 100
+            quiz_completed = 10
+            problem_solved = 10
+            training_organized = 50
+            idea_submitted = 5
+            training_registered = 5
+        return Defaults()
+    settings, created = PointSettings.objects.get_or_create(tenant=tenant)
+    return settings
+
+
+def get_user_badges(user, tenant):
+    """Get all badges a user has earned based on their total_score."""
+    if not tenant or not hasattr(user, 'profile'):
+        return [], None
+    
+    # Ensure default badges exist for this tenant
+    existing = Badge.objects.filter(tenant=tenant).count()
+    if existing == 0:
+        for bd in BADGE_DEFINITIONS:
+            Badge.objects.create(
+                tenant=tenant,
+                name=bd['name'],
+                icon=bd['icon'],
+                min_points=bd['min_points'],
+                color=bd['color'],
+            )
+    
+    all_badges = Badge.objects.filter(tenant=tenant).order_by('min_points')
+    score = user.profile.total_score
+    earned = [b for b in all_badges if score >= b.min_points]
+    current_badge = earned[-1] if earned else None
+    
+    # Find next badge
+    next_badge = None
+    for b in all_badges:
+        if score < b.min_points:
+            next_badge = b
+            break
+    
+    return earned, current_badge, next_badge, list(all_badges)
+
 
 # 0. Company Admin Dashboard
 @login_required
@@ -40,11 +89,49 @@ def company_admin_dashboard(request):
     users = Profile.objects.filter(tenant=request.tenant).select_related('user', 'department')
     trainings = Training.objects.filter(tenant=request.tenant)
     
+    # Handle Point Settings form
+    pt = get_point_settings(request.tenant)
+    if request.method == 'POST' and 'save_point_settings' in request.POST:
+        try:
+            pt.idea_accepted = int(request.POST.get('idea_accepted', pt.idea_accepted))
+            pt.quiz_completed = int(request.POST.get('quiz_completed', pt.quiz_completed))
+            pt.problem_solved = int(request.POST.get('problem_solved', pt.problem_solved))
+            pt.training_organized = int(request.POST.get('training_organized', pt.training_organized))
+            pt.idea_submitted = int(request.POST.get('idea_submitted', pt.idea_submitted))
+            pt.training_registered = int(request.POST.get('training_registered', pt.training_registered))
+            pt.save()
+            messages.success(request, "Point settings updated successfully!")
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid values. Please enter whole numbers.")
+        return redirect('company_admin_dashboard')
+    
+    # Handle Badge form
+    if request.method == 'POST' and 'save_badges' in request.POST:
+        badge_ids = request.POST.getlist('badge_id')
+        for bid in badge_ids:
+            try:
+                badge = Badge.objects.get(id=bid, tenant=request.tenant)
+                badge.name = request.POST.get(f'badge_name_{bid}', badge.name)
+                badge.icon = request.POST.get(f'badge_icon_{bid}', badge.icon)
+                badge.min_points = int(request.POST.get(f'badge_min_points_{bid}', badge.min_points))
+                badge.color = request.POST.get(f'badge_color_{bid}', badge.color)
+                badge.save()
+            except (Badge.DoesNotExist, ValueError, TypeError):
+                pass
+        messages.success(request, "Badge settings updated successfully!")
+        return redirect('company_admin_dashboard')
+    
+    # Ensure badges exist
+    get_user_badges(request.user, request.tenant)
+    all_badges = Badge.objects.filter(tenant=request.tenant).order_by('min_points')
+    
     return render(request, 'gameplay/company_admin_dashboard.html', {
         'tenant': request.tenant,
         'departments': departments,
         'users': users,
         'trainings': trainings,
+        'point_settings': pt,
+        'all_badges': all_badges,
         'active_tab': 'admin',
     })
 
@@ -263,7 +350,7 @@ def ideas_page(request):
             Q(title__icontains=search_query) | Q(description__icontains=search_query)
         )
 
-    pending_ideas = pending_ideas.annotate(num_votes=Count('voters')).order_by('title')
+    pending_ideas = pending_ideas.annotate(num_votes=Count('voters')).order_by('-num_votes', 'title')
 
     if not request.tenant:
         categories = IdeaCategory.objects.none()
@@ -349,6 +436,11 @@ def profile_page(request):
     from .models import RedeemedReward
     redeemed_rewards = RedeemedReward.objects.filter(user=request.user).order_by('-date_redeemed')
 
+    # Badges
+    earned_badges, current_badge, next_badge, all_badges = ([], None, None, [])  
+    if request.tenant:
+        earned_badges, current_badge, next_badge, all_badges = get_user_badges(request.user, request.tenant)
+
     return render(request, 'gameplay/profile.html', {
         'profile': user_profile,
         'my_ideas': my_ideas,
@@ -356,6 +448,10 @@ def profile_page(request):
         'pending_ideas_count': pending_ideas_count,
         'training_stats': training_stats, # Pass stats to the template
         'redeemed_rewards': redeemed_rewards,
+        'earned_badges': earned_badges,
+        'current_badge': current_badge,
+        'next_badge': next_badge,
+        'all_badges': all_badges,
         'active_tab': 'profile'
     })
 
@@ -395,12 +491,19 @@ def stats_page(request):
     from .models import RedeemedReward
     redeemed_rewards = RedeemedReward.objects.filter(user=request.user).order_by('-date_redeemed')
 
+    # Badges
+    earned_badges, current_badge, next_badge, all_badges = get_user_badges(request.user, tenant)
+
     return render(request, 'gameplay/stats.html', {
         'profile': user_profile,
         'accepted_ideas_count': accepted_ideas_count,
         'pending_ideas_count': pending_ideas_count,
         'training_stats': training_stats,
         'redeemed_rewards': redeemed_rewards,
+        'earned_badges': earned_badges,
+        'current_badge': current_badge,
+        'next_badge': next_badge,
+        'all_badges': all_badges,
         'active_tab': 'stats'
     })
 
@@ -536,9 +639,10 @@ def take_quiz(request, training_id):
                 training.organizer.profile.bonus_euros += 50
                 training.organizer.profile.save()
 
-        # Save result and give points
+        # Save result and give points (use configurable quiz_completed points)
+        pt = get_point_settings(request.tenant)
         QuizResult.objects.create(training=training, user=request.user, score=score, tenant=request.tenant)
-        request.user.profile.total_score += (score * 10)
+        request.user.profile.total_score += (score * pt.quiz_completed)
         request.user.profile.save()
 
         return render(request, 'gameplay/quiz_results.html', {
@@ -783,8 +887,9 @@ def take_department_quiz(request, department_id):
 
         QuizResult.objects.create(department=department, user=request.user, score=score, tenant=request.tenant)
         
-        # Give Points
-        points_earned = score * 10
+        # Give Points (use configurable quiz_completed points)
+        pt = get_point_settings(request.tenant)
+        points_earned = score * pt.quiz_completed
         request.user.profile.total_score += points_earned
         request.user.profile.save()
 
@@ -823,19 +928,20 @@ def accept_idea(request, idea_id):
             dept_names = ', '.join(d.name for d in new_depts)
             messages.success(request, f"Idea accepted for: {dept_names}!")
             
-            # Create alert for the idea submitter
+            # Create alert for the idea submitter (use configurable idea_accepted points)
+            pt = get_point_settings(request.tenant)
             if idea.submitted_by:
                 ActionLog.objects.create(
                     tenant=request.tenant,
                     user=idea.submitted_by,
                     action_name=f'Your idea "{idea.title}" was accepted!',
-                    points=100,
+                    points=pt.idea_accepted,
                 )
                 
                 if hasattr(idea.submitted_by, 'profile'):
-                    idea.submitted_by.profile.total_score += 100
+                    idea.submitted_by.profile.total_score += pt.idea_accepted
                     idea.submitted_by.profile.save()
-                    messages.success(request, f"100 bonus points automatically awarded to {idea.submitted_by.username}!")
+                    messages.success(request, f"{pt.idea_accepted} bonus points automatically awarded to {idea.submitted_by.username}!")
         else:
             messages.info(request, "This idea has already been accepted by all departments.")
     elif hasattr(request.user, 'profile') and request.user.profile.department:
@@ -844,19 +950,20 @@ def accept_idea(request, idea_id):
             idea.accepted_by.add(admin_dept)
             messages.success(request, f"Idea successfully installed for {admin_dept.name}!")
             
-            # Create alert for the idea submitter
+            # Create alert for the idea submitter (use configurable idea_accepted points)
+            pt_dept = get_point_settings(request.tenant)
             if idea.submitted_by:
                 ActionLog.objects.create(
                     tenant=request.tenant,
                     user=idea.submitted_by,
                     action_name=f'Your idea "{idea.title}" was accepted by {admin_dept.name}!',
-                    points=100,
+                    points=pt_dept.idea_accepted,
                 )
                 
                 if hasattr(idea.submitted_by, 'profile'):
-                    idea.submitted_by.profile.total_score += 100
+                    idea.submitted_by.profile.total_score += pt_dept.idea_accepted
                     idea.submitted_by.profile.save()
-                    messages.success(request, f"100 bonus points automatically awarded to {idea.submitted_by.username}!")
+                    messages.success(request, f"{pt_dept.idea_accepted} bonus points automatically awarded to {idea.submitted_by.username}!")
         else:
             messages.info(request, "This idea has already been accepted by your department.")
     else:
@@ -968,8 +1075,9 @@ def confirm_solved(request, problem_id):
     # Find the helper who claimed the solution
     helper_profile = problem.claimed_by.profile
     
-    # Give the points bonus
-    helper_profile.total_score += 10
+    # Give the points bonus (use configurable problem_solved points)
+    pt = get_point_settings(request.tenant)
+    helper_profile.total_score += pt.problem_solved
     helper_profile.save()
     
     # Step 3: Finalize the problem
@@ -977,7 +1085,7 @@ def confirm_solved(request, problem_id):
     problem.solved_at = timezone.now()
     problem.save()
     
-    messages.success(request, f"Perfect! The problem is confirmed solved. +10 points added to {problem.claimed_by.username}'s profile!")
+    messages.success(request, f"Perfect! The problem is confirmed solved. +{pt.problem_solved} points added to {problem.claimed_by.username}'s profile!")
     return redirect('profile_page')
 
 # 18. Submitter rejects the solution

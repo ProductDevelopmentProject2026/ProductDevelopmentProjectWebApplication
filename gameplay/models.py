@@ -222,3 +222,45 @@ class RedeemedReward(TenantAwareModel):
 
     def __str__(self):
         return f"{self.user.username} - {self.store} {self.amount}€"
+
+
+class PointSettings(TenantAwareModel):
+    """Configurable point values for each rewarded action, per tenant."""
+    idea_accepted = models.IntegerField(default=100, help_text="Points awarded when an idea is accepted/implemented")
+    quiz_completed = models.IntegerField(default=10, help_text="Points per correct answer in a quiz")
+    problem_solved = models.IntegerField(default=10, help_text="Points awarded when a problem solution is confirmed")
+    training_organized = models.IntegerField(default=50, help_text="Bonus euros for organising a cross-dept training")
+    idea_submitted = models.IntegerField(default=5, help_text="Points awarded for submitting a new idea")
+    training_registered = models.IntegerField(default=5, help_text="Points awarded for registering to a training")
+
+    class Meta:
+        verbose_name_plural = "Point settings"
+
+    def __str__(self):
+        return f"Point Settings ({self.tenant.name})"
+
+
+# Default badge definitions (applied per tenant)
+BADGE_DEFINITIONS = [
+    {'name': 'Newcomer',      'icon': '🌱', 'min_points': 0,    'color': '#94a3b8'},
+    {'name': 'Contributor',    'icon': '⭐', 'min_points': 50,   'color': '#f59e0b'},
+    {'name': 'Achiever',       'icon': '🏅', 'min_points': 150,  'color': '#f97316'},
+    {'name': 'Expert',         'icon': '💎', 'min_points': 300,  'color': '#3b82f6'},
+    {'name': 'Champion',       'icon': '🏆', 'min_points': 500,  'color': '#8b5cf6'},
+    {'name': 'Legend',         'icon': '👑', 'min_points': 1000, 'color': '#ef4444'},
+]
+
+
+class Badge(TenantAwareModel):
+    """Badges earned automatically based on point thresholds."""
+    name = models.CharField(max_length=100)
+    icon = models.CharField(max_length=10, default='⭐', help_text="Emoji icon for the badge")
+    min_points = models.IntegerField(default=0, help_text="Minimum points required to earn this badge")
+    color = models.CharField(max_length=20, default='#f59e0b', help_text="Hex color for badge display")
+
+    class Meta:
+        ordering = ['min_points']
+        unique_together = ('tenant', 'name')
+
+    def __str__(self):
+        return f"{self.icon} {self.name} ({self.min_points}+ pts)"

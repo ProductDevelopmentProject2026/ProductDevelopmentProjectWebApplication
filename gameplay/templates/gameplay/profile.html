@@ -18,6 +18,81 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        /* Badge styles */
+        .badge-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 15px;
+        }
+        .badge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 20px;
+            border-radius: 12px;
+            min-width: 100px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .badge-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .badge-item.earned {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 2px solid #86efac;
+        }
+        .badge-item.locked {
+            background: #f3f4f6;
+            border: 2px dashed #d1d5db;
+            opacity: 0.55;
+        }
+        .badge-icon {
+            font-size: 2.2em;
+            margin-bottom: 6px;
+        }
+        .badge-name {
+            font-weight: 700;
+            font-size: 0.85em;
+            color: #1f2937;
+        }
+        .badge-pts {
+            font-size: 0.75em;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        .badge-check {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 0.85em;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background: #e5e7eb;
+            border-radius: 20px;
+            height: 14px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.6s ease;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        .current-badge-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
     </style>
     <h1 style="margin-bottom: 30px;">My Profile: {{ request.user.username }}</h1>
     
@@ -28,7 +103,51 @@
         
         <p><strong>Total Score:</strong> <span style="color: #27ae60; font-weight: bold; font-size: 1.2em;">{{ profile.total_score }}</span></p>
         <p><strong>Bonuses:</strong> <span style="color: #27ae60; font-weight: bold; font-size: 1.2em;">{{ request.user.profile.bonus_euros }} Euros</span></p>
+
+        {% if current_badge %}
+        <div style="margin-top: 15px;">
+            <div class="current-badge-banner" style="background: {{ current_badge.color }}22; color: {{ current_badge.color }}; border: 2px solid {{ current_badge.color }}44;">
+                {{ current_badge.icon }} {{ current_badge.name }}
+            </div>
+        </div>
+        {% endif %}
     </div>
+
+    <!-- Badges Section -->
+    {% if all_badges %}
+    <div class="schedule-card" style="border-top: 5px solid #f59e0b;">
+        <h3 class="schedule-title" style="color: #2c3e50;">🏅 My Badges</h3>
+        
+        {% if next_badge %}
+        <p style="color: #6b7280; margin-bottom: 5px;">
+            <strong>Next badge:</strong> {{ next_badge.icon }} {{ next_badge.name }} — 
+            <strong style="color: #f59e0b;">{{ next_badge.min_points }} pts</strong> needed 
+            (you have <strong style="color: #22c55e;">{{ profile.total_score }}</strong>)
+        </p>
+        <div class="progress-bar-container">
+            {% widthratio profile.total_score next_badge.min_points 100 as progress %}
+            <div class="progress-bar-fill" style="width: {% widthratio profile.total_score next_badge.min_points 100 %}%;"></div>
+        </div>
+        {% else %}
+        <p style="color: #22c55e; font-weight: 700;">🎉 You've unlocked all badges! You're a Legend!</p>
+        {% endif %}
+
+        <div class="badge-grid">
+            {% for badge in all_badges %}
+            <div class="badge-item {% if badge in earned_badges %}earned{% else %}locked{% endif %}">
+                {% if badge in earned_badges %}
+                <span class="badge-check">✅</span>
+                {% else %}
+                <span class="badge-check">🔒</span>
+                {% endif %}
+                <span class="badge-icon">{{ badge.icon }}</span>
+                <span class="badge-name" style="{% if badge in earned_badges %}color: {{ badge.color }};{% endif %}">{{ badge.name }}</span>
+                <span class="badge-pts">{{ badge.min_points }}+ pts</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="schedule-card" style="margin-top: 20px; border-top: 5px solid #27ae60;">
         <h3 class="schedule-title" style="margin-bottom: 15px; color: #2c3e50;">📊 Innovation & Help Stats</h3>

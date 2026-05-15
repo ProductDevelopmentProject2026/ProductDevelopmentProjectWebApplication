@@ -19,53 +19,130 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin: 10px -10px;
-            padding: 0 10px;
-        }
-        .admin-table {
-            width: 100%;
-            min-width: 700px;
-            text-align: left;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-        .admin-table th {
-            background: var(--input-bg, #ecf0f1);
-            color: var(--text-primary, #2c3e50);
-            padding: 10px 12px;
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            white-space: nowrap;
-            border-bottom: 2px solid var(--border-color, #ddd);
-        }
-        .admin-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border-color, #eee);
-            color: var(--text-primary, #333);
-            word-break: break-word;
-            max-width: 200px;
-        }
-        .admin-table tr:hover td {
-            background: var(--input-bg, #f8f9fa);
-        }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 10px -10px; padding: 0 10px; }
+        .admin-table { width: 100%; min-width: 700px; text-align: left; border-collapse: collapse; font-size: 0.9rem; }
+        .admin-table th { background: var(--input-bg, #ecf0f1); color: var(--text-primary, #2c3e50); padding: 10px 12px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; border-bottom: 2px solid var(--border-color, #ddd); }
+        .admin-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color, #eee); color: var(--text-primary, #333); word-break: break-word; max-width: 200px; }
+        .admin-table tr:hover td { background: var(--input-bg, #f8f9fa); }
+        .pts-input { width: 80px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; text-align: center; }
+        .pts-input:focus { border-color: #f59e0b; outline: none; box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
+        .save-btn { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+        .save-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(245,158,11,0.3); }
+        .add-dept-btn { background: linear-gradient(135deg, #059669, #047857); color: white; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .badge-config-row { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; background: #fafbfc; }
+        .badge-config-row input { margin: 0 !important; }
     </style>
+
 <div class="schedule-card" style="margin: 20px; padding: 40px;">
     <h2 class="schedule-title" style="border-bottom: 2px solid #f39c12; padding-bottom: 10px;">
-        &#9881;&#65039; Company Admin Dashboard: {{ tenant.name }}
+        &#9881;&#65039; Company Admin
     </h2>
+    <span style="background: #f3f4f6; color: #6b7280; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; text-transform: uppercase;">{{ tenant.name }}</span>
 
-    <div style="margin-top: 20px;">
-        <h3 style="color: #2980b9;">Departments &amp; Points Overview</h3>
-        <ul style="line-height: 1.6;">
+    <!-- REWARDS PROGRAM - Point Settings -->
+    <div style="margin-top: 30px;">
+        <div class="section-header">
+            <h3 style="color: #f59e0b; margin: 0; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;">Rewards Program</h3>
+            <a href="{% url 'redeem_page' %}" style="background: #f59e0b; color: white; padding: 6px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85em;">Edit tiers, gift cards & bonuses</a>
+        </div>
+        <p style="color: #6b7280; font-size: 0.9em; margin-bottom: 20px;">
+            Configure point thresholds for Bronze→Diamond on the dashboard, training and quiz organizer bonuses (€), redeemable gift-card rows (points → €), and store names (Maxima, Akropolis, ...).
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px;">
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 16px;">
+                    <label style="font-size: 0.8em; color: #92400e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Idea Accepted</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                        <input type="number" name="idea_accepted" value="{{ point_settings.idea_accepted }}" class="pts-input" min="0">
+                        <span style="color: #92400e; font-size: 0.85em; font-weight: 600;">pts</span>
+                    </div>
+                </div>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px;">
+                    <label style="font-size: 0.8em; color: #1e40af; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Quiz (per correct answer)</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                        <input type="number" name="quiz_completed" value="{{ point_settings.quiz_completed }}" class="pts-input" min="0">
+                        <span style="color: #1e40af; font-size: 0.85em; font-weight: 600;">pts</span>
+                    </div>
+                </div>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px;">
+                    <label style="font-size: 0.8em; color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Problem Solved</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                        <input type="number" name="problem_solved" value="{{ point_settings.problem_solved }}" class="pts-input" min="0">
+                        <span style="color: #166534; font-size: 0.85em; font-weight: 600;">pts</span>
+                    </div>
+                </div>
+                <div style="background: #fdf4ff; border: 1px solid #e9d5ff; border-radius: 10px; padding: 16px;">
+                    <label style="font-size: 0.8em; color: #7e22ce; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Training Organized</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                        <input type="number" name="training_organized" value="{{ point_settings.training_organized }}" class="pts-input" min="0">
+                        <span style="color: #7e22ce; font-size: 0.85em; font-weight: 600;">€ bonus</span>
+                    </div>
+                </div>
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 16px;">
+                    <label style="font-size: 0.8em; color: #991b1b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Idea Submitted</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                        <input type="number" name="idea_submitted" value="{{ point_settings.idea_submitted }}" class="pts-input" min="0">
+                        <span style="color: #991b1b; font-size: 0.85em; font-weight: 600;">pts</span>
+                    </div>
+                </div>
+                <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 16px;">
+                    <label style="font-size: 0.8em; color: #115e59; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Training Registered</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                        <input type="number" name="training_registered" value="{{ point_settings.training_registered }}" class="pts-input" min="0">
+                        <span style="color: #115e59; font-size: 0.85em; font-weight: 600;">pts</span>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <button type="submit" name="save_point_settings" class="save-btn">💾 Save Point Settings</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- BADGE CONFIG -->
+    <div style="margin-top: 40px;">
+        <div class="section-header">
+            <h3 style="color: #8b5cf6; margin: 0; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;">🏅 Badge Thresholds</h3>
+        </div>
+        <p style="color: #6b7280; font-size: 0.9em; margin-bottom: 15px;">
+            Configure badge names, icons, and the minimum points required to earn each badge.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            {% for badge in all_badges %}
+            <div class="badge-config-row">
+                <input type="hidden" name="badge_id" value="{{ badge.id }}">
+                <span style="font-size: 1.5em; min-width: 35px; text-align: center;">
+                    <input type="text" name="badge_icon_{{ badge.id }}" value="{{ badge.icon }}" style="width: 45px; padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1.2em; text-align: center;">
+                </span>
+                <input type="text" name="badge_name_{{ badge.id }}" value="{{ badge.name }}" style="flex: 1; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 600;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 0.8em; color: #6b7280;">Min:</span>
+                    <input type="number" name="badge_min_points_{{ badge.id }}" value="{{ badge.min_points }}" class="pts-input" min="0">
+                    <span style="font-size: 0.8em; color: #6b7280;">pts</span>
+                </div>
+                <input type="color" name="badge_color_{{ badge.id }}" value="{{ badge.color }}" style="width: 36px; height: 36px; border: none; cursor: pointer; border-radius: 6px;">
+            </div>
+            {% endfor %}
+            <div style="margin-top: 15px;">
+                <button type="submit" name="save_badges" class="save-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">💾 Save Badge Settings</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- DEPARTMENTS & POINTS -->
+    <div style="margin-top: 40px;">
+        <div class="section-header">
+            <h3 style="color: #059669; margin: 0; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;">Departments & Points</h3>
+            <button class="add-dept-btn" onclick="window.location.href='{% url 'departments_page' %}'">+ Add Department</button>
+        </div>
+        <ul style="line-height: 2.2; list-style: none; padding: 0;">
             {% for dept in departments %}
-            <li>
-                <strong>{{ dept.name }}</strong>: {{ dept.points|default:0 }} points
-                <a href="{% url 'edit_department' dept.id %}" style="margin-left: 10px; font-size: 0.85em; color: #e67e22; text-decoration: none;">&#9999;&#65039; Edit</a>
+            <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+                <span><strong>{{ dept.name }}</strong> <span style="color: #6b7280;">{{ dept.points|default:0 }} points</span></span>
+                <a href="{% url 'edit_department' dept.id %}" style="font-size: 0.85em; color: #e67e22; text-decoration: none;">&#9999;&#65039; Edit</a>
             </li>
             {% empty %}
             <li>No departments found.</li>
@@ -73,8 +150,9 @@
         </ul>
     </div>
 
-    <div style="margin-top: 20px;">
-        <h3 style="color: #2980b9;">Users / Employees</h3>
+    <!-- EMPLOYEES -->
+    <div style="margin-top: 40px;">
+        <h3 style="color: #2980b9; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;">Employees</h3>
         <div class="table-wrapper">
             <table class="admin-table">
                 <tr>
@@ -105,8 +183,9 @@
         </div>
     </div>
 
-    <div style="margin-top: 20px;">
-        <h3 style="color: #2980b9;">Trainings Overview</h3>
+    <!-- TRAININGS -->
+    <div style="margin-top: 40px;">
+        <h3 style="color: #2980b9; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;">Trainings Overview</h3>
         <ul style="line-height: 1.6;">
             {% for training in trainings %}
             <li><strong>{{ training.title }}</strong> (Organizer: {{ training.organizer.username }})</li>
