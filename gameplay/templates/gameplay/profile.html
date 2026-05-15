@@ -185,11 +185,11 @@
     </div>
 
     <div class="schedule-card" style="border-top: 5px solid #f39c12;">
-        <h3 class="schedule-title">My Shared Problems (Await My Confirmation)</h3>
-        <p style="color: #7f8c8d; margin-top: 0;">Confirm if a fellow employee's suggested solution actually worked for your problem.</p>
+        <h3 class="schedule-title">My Shared Problems & Solutions</h3>
+        <p style="color: #7f8c8d; margin-top: 0;">Review solutions to the problems you have shared.</p>
         <ul style="padding-left: 0; list-style: none; border-left: 3px solid #f39c12; padding-left: 15px;">
             {% for problem in request.user.submitted_problems.all %}
-                {% if problem.is_claimed_solved and not problem.is_solved %}
+                {% if problem.is_claimed_solved %}
                     <li style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <div style="padding-right: 15px; flex-grow: 1;">
@@ -198,16 +198,22 @@
                                 <span style="color: #7f8c8d;">Solution provided by: <strong style="color: #34495e;">{{ problem.claimed_by.username }}</strong></span>
                             </div>
                             <div style="text-align: right; min-width: 250px;">
-                                <a href="{% url 'confirm_solved' problem.id %}">
-                                    <button style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold;">
-                                        ✅ It Worked! (+10 pts)
-                                    </button>
-                                </a>
-                                <a href="{% url 'reject_solution' problem.id %}" style="margin-left: 5px;">
-                                    <button style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px;">
-                                        ❌ Did not work
-                                    </button>
-                                </a>
+                                {% if not problem.is_solved %}
+                                    <a href="{% url 'confirm_solved' problem.id %}">
+                                        <button style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold;">
+                                            ✅ It Worked! (+10 pts)
+                                        </button>
+                                    </a>
+                                    <a href="{% url 'reject_solution' problem.id %}" style="margin-left: 5px;">
+                                        <button style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px;">
+                                            ❌ Did not work
+                                        </button>
+                                    </a>
+                                {% else %}
+                                    <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 4px; font-weight: bold; display: inline-block;">
+                                        Perfect! Solved. ✅
+                                    </span>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -225,7 +231,7 @@
                     </li>
                 {% endif %}
             {% empty %}
-                <li style="color: #777; font-style: italic;">You haven't shared any problems requiring confirmation.</li>
+                <li style="color: #777; font-style: italic;">You haven't shared any problems yet.</li>
             {% endfor %}
         </ul>
     </div>
