@@ -253,6 +253,272 @@
         [data-theme="dark"] .card {
             background: var(--card-bg) !important;
         }
+
+        /* ── GLOBAL DARK MODE FIXES ── */
+        /* Schedule cards used across many pages */
+        [data-theme="dark"] .schedule-card {
+            background: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] .schedule-title {
+            color: var(--text-secondary) !important;
+        }
+
+        /* All hardcoded text colors inside dark containers */
+        [data-theme="dark"] .schedule-card p,
+        [data-theme="dark"] .schedule-card span,
+        [data-theme="dark"] .schedule-card small,
+        [data-theme="dark"] .schedule-card li,
+        [data-theme="dark"] .schedule-card div,
+        [data-theme="dark"] .schedule-card label {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .schedule-card h1,
+        [data-theme="dark"] .schedule-card h2,
+        [data-theme="dark"] .schedule-card h3,
+        [data-theme="dark"] .schedule-card h4,
+        [data-theme="dark"] .schedule-card strong,
+        [data-theme="dark"] .schedule-card b {
+            color: var(--text-primary) !important;
+        }
+
+        /* Form inputs inside dark cards */
+        [data-theme="dark"] .schedule-card input[type="text"],
+        [data-theme="dark"] .schedule-card input[type="number"],
+        [data-theme="dark"] .schedule-card input[type="email"],
+        [data-theme="dark"] .schedule-card input[type="password"],
+        [data-theme="dark"] .schedule-card textarea,
+        [data-theme="dark"] .schedule-card select,
+        [data-theme="dark"] .input-with-icon input {
+            background: var(--input-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Custom form labels */
+        [data-theme="dark"] .custom-form-group label {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Drag-drop & file picker */
+        [data-theme="dark"] .drag-drop-zone {
+            background: var(--input-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .fake-file-input {
+            background: var(--input-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .choose-file-btn {
+            background: #2d3748 !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* SVG icons in inputs */
+        [data-theme="dark"] .input-with-icon svg {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Analytics page: stat cards and chart cards */
+        [data-theme="dark"] .stat-card,
+        [data-theme="dark"] .chart-card {
+            background: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] .stat-value {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] .stat-label {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .stat-sub {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .stat-pill {
+            background: #1a2e23 !important;
+            color: #86efac !important;
+            border-color: #22543d !important;
+        }
+        [data-theme="dark"] .chart-title {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] .chart-title-sm {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .analytics-header p {
+            color: #86efac !important;
+        }
+        [data-theme="dark"] .action-btn {
+            background: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Chart canvas backgrounds */
+        [data-theme="dark"] .chart-card div[style*="background: #f8fafc"] {
+            background: #1a2332 !important;
+        }
+
+        /* Quill rich-text editor dark mode */
+        [data-theme="dark"] .ql-toolbar.ql-snow {
+            border-color: var(--border-color) !important;
+            background: var(--input-bg) !important;
+        }
+        [data-theme="dark"] .ql-container.ql-snow {
+            border-color: var(--border-color) !important;
+            background: var(--input-bg) !important;
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] .ql-editor {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] .ql-toolbar .ql-stroke {
+            stroke: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .ql-toolbar .ql-fill {
+            fill: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .ql-toolbar .ql-picker-label {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="dark"] .ql-toolbar .ql-picker-options {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .ql-toolbar .ql-picker-item {
+            color: var(--text-primary) !important;
+        }
+
+        /* Colored stat boxes (profile/stats pages) */
+        [data-theme="dark"] div[style*="background: #e0f2f1"],
+        [data-theme="dark"] div[style*="background: #e8f5e9"],
+        [data-theme="dark"] div[style*="background: #fff3cd"],
+        [data-theme="dark"] div[style*="background: #e0f7fa"],
+        [data-theme="dark"] div[style*="background: #fff8e1"],
+        [data-theme="dark"] div[style*="background: #f8f9fa"],
+        [data-theme="dark"] div[style*="background: #f4f6f7"],
+        [data-theme="dark"] div[style*="background: #f9fafb"],
+        [data-theme="dark"] div[style*="background-color: #fffaf0"],
+        [data-theme="dark"] div[style*="background-color: #f9fafb"] {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Redeem / reward labels */
+        [data-theme="dark"] li[style*="background: #f8f9fa"] {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] li[style*="background: #f8f9fa"] strong {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] li[style*="background: #f8f9fa"] div {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Training card specific dark fixes */
+        [data-theme="dark"] .schedule-card a {
+            color: #93c5fd !important;
+        }
+        [data-theme="dark"] .schedule-card button {
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .schedule-card ul {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Big numbers on training cards */
+        [data-theme="dark"] span[style*="font-size: 2.8em"] {
+            color: var(--text-primary) !important;
+        }
+
+        /* Search inputs on pages */
+        [data-theme="dark"] input[placeholder*="Search"] {
+            background: var(--input-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Tenant switcher */
+        [data-theme="dark"] #tenantSwitcher {
+            background: var(--input-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Admin link */
+        [data-theme="dark"] a[style*="color: #4b5563"] {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Redeem page select */
+        [data-theme="dark"] select[name="store_choice"] {
+            background: var(--input-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Radio label hover in dark */
+        [data-theme="dark"] label[onmouseover] {
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] label[onmouseover] strong {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="dark"] label[onmouseover] div {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Redeem card background override */
+        [data-theme="dark"] .schedule-card[style*="background-color: #fffaf0"] {
+            background: var(--card-bg) !important;
+        }
+
+        /* Analytics icon wrapper */
+        [data-theme="dark"] .icon-wrapper {
+            background: #2d3748 !important;
+        }
+
+        /* Department detail chart background */
+        [data-theme="dark"] div[style*="background: #f9f9f9"] {
+            background: #1a2332 !important;
+        }
+
+        /* List borders in dark mode */
+        [data-theme="dark"] li[style*="border-bottom: 1px solid #eee"] {
+            border-bottom-color: var(--border-color) !important;
+        }
+
+        /* Department links in dark mode */
+        [data-theme="dark"] a[style*="color: #2980b9"] {
+            color: #93c5fd !important;
+        }
+
+        /* Headings with hardcoded colors in admin/department pages */
+        [data-theme="dark"] h3[style*="color: #2980b9"] {
+            color: #93c5fd !important;
+        }
+        [data-theme="dark"] h3[style*="color: #2c3e50"],
+        [data-theme="dark"] h4[style*="color: #34495e"],
+        [data-theme="dark"] h4[style*="color: #2c3e50"] {
+            color: var(--text-primary) !important;
+        }
+
+        /* Map controls in dark mode */
+        [data-theme="dark"] .map-controls button {
+            background: rgba(30, 37, 51, 0.95) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-secondary) !important;
+        }
+
+        /* Live badge dark mode */
+        [data-theme="dark"] .map-live-badge {
+            background: #1a2e23 !important;
+            border-color: #22543d !important;
+            color: #86efac !important;
+        }
     </style>
 </head>
 <body>

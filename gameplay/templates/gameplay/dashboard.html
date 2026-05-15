@@ -219,6 +219,7 @@
         const departments = [
             {% for d in departments %}
             {
+                id: {{ d.id }},
                 name: "{{ d.name|escapejs }}",
                 points: {{ d.total_points|default:0 }},
                 height: {{ d.building_height|default:30 }},
@@ -230,6 +231,25 @@
             {% endfor %}
         ];
 
+        // ── Raycasting for building click navigation ──
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const buildingGroups = [];  // all department groups for raycasting
+        let pointerDownPos = null;
+        let pointerDownTime = 0;
+
+        // Helper: find the department ID from any hit mesh by walking up to its group
+        function getDeptIdFromHit(object) {
+            let current = object;
+            while (current) {
+                if (current.userData && current.userData.deptId) {
+                    return current.userData.deptId;
+                }
+                current = current.parent;
+            }
+            return null;
+        }
+
         // Create flat layered buildings for each department
         departments.forEach(dept => {
             const buildingHeight = dept.height / 3;
@@ -240,6 +260,7 @@
             const deptColor = new THREE.Color(dept.color);
 
             const group = new THREE.Group();
+            group.userData = { deptId: dept.id, deptName: dept.name };
 
             for (let i = 0; i < layers; i++) {
                 const shrink = 1 - (i * 0.04);
@@ -297,6 +318,7 @@
 
             group.position.set(dept.x, 0, dept.z);
             scene.add(group);
+            buildingGroups.push(group);
 
             // Floating label sprite
             const canvas = document.createElement('canvas');
@@ -339,6 +361,50 @@
             sprite.position.set(dept.x, topY + 10, dept.z);
             sprite.scale.set(26, 7, 1);
             scene.add(sprite);
+        });
+
+        // ── Click on buildings — using pointerdown/pointerup to not conflict with OrbitControls ──
+        renderer.domElement.addEventListener('pointerdown', function(e) {
+            pointerDownPos = { x: e.clientX, y: e.clientY };
+            pointerDownTime = Date.now();
+        }, true);
+
+        renderer.domElement.addEventListener('pointerup', function(e) {
+            if (!pointerDownPos) return;
+            const dx = e.clientX - pointerDownPos.x;
+            const dy = e.clientY - pointerDownPos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const elapsed = Date.now() - pointerDownTime;
+            pointerDownPos = null;
+
+            // Only treat as click if barely moved AND was a quick tap (not an orbit drag)
+            if (dist > 8 || elapsed > 400) return;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            // Recursively test all children of every building group
+            const intersects = raycaster.intersectObjects(buildingGroups, true);
+
+            if (intersects.length > 0) {
+                const deptId = getDeptIdFromHit(intersects[0].object);
+                if (deptId) {
+                    window.location.href = '/department/' + deptId + '/';
+                }
+            }
+        }, true);
+
+        // Change cursor on hover over buildings
+        renderer.domElement.addEventListener('mousemove', function(e) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(buildingGroups, true);
+            renderer.domElement.style.cursor = intersects.length > 0 ? 'pointer' : 'grab';
         });
 
         // Handle Window Resizing smoothly

@@ -701,12 +701,13 @@ def department_detail(request, department_id):
 
     video_embed_url = None
     if department.video_url:
-        regex = r'(?:v=|\/)([0-9A-Za-z_-]{11}).*'
+        # Robust regex: handles watch?v=, youtu.be/, embed/, shorts/, and live/ URLs
+        regex = r'(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([0-9A-Za-z_-]{11})'
         match = re.search(regex, department.video_url)
         
         if match:
             video_id = match.group(1)
-            video_embed_url = f"https://www.youtube.com/embed/{video_id}"
+            video_embed_url = f"https://www.youtube-nocookie.com/embed/{video_id}?rel=0"
 
     # Count how many ideas this specific department has accepted/installed
     accepted_ideas_count = department.installed_ideas.count()
