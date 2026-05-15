@@ -16,40 +16,40 @@ class TenantMiddleware:
 
         tenant = None
 
-        # 1) Querystring: ?tenant=hoptrans
-        tenant_slug = request.GET.get('tenant')
-        if tenant_slug:
-            tenant = Tenant.objects.filter(subdomain=tenant_slug).first()
-            if tenant and hasattr(request, 'session'):
-                request.session['tenant_id'] = tenant.id
+        # 1) Subdomain (Primary way for SaaS)
+        host = request.get_host().split(':')[0]
+        is_ip = all(part.isdigit() for part in host.split('.'))
+        subdomain = host.split('.')[0]
+        
+        # Added testserver to prevent Django's default test client from triggering a 404
+        # Skip subdomain checks for IP addresses
+        if subdomain and not is_ip and subdomain not in ['www', 'localhost', 'testserver']:
+            tenant = Tenant.objects.filter(subdomain=subdomain).first()
             if not tenant:
                 raise Http404("Organization not found.")
 
-        # 1.5) Session fallback for IP access
+        # 2) Querystring: ?tenant=hoptrans
+        if not tenant:
+            tenant_slug = request.GET.get('tenant')
+            if tenant_slug:
+                tenant = Tenant.objects.filter(subdomain=tenant_slug).first()
+                if tenant and hasattr(request, 'session'):
+                    request.session['tenant_id'] = tenant.id
+                if not tenant:
+                    raise Http404("Organization not found.")
+
+        # 3) Session fallback for IP access
         if not tenant and hasattr(request, 'session') and request.session.get('tenant_id'):
             tenant = Tenant.objects.filter(id=request.session.get('tenant_id')).first()
 
-        # 1.8) User Profile fallback
+        # 4) User Profile fallback
         if not tenant and hasattr(request, 'user') and request.user.is_authenticated:
             if hasattr(request.user, 'profile') and getattr(request.user.profile, 'tenant_id', None):
                 tenant = request.user.profile.tenant
                 if hasattr(request, 'session'):
                     request.session['tenant_id'] = tenant.id
 
-        # 2) Subdomain fallback
-        if not tenant:
-            host = request.get_host().split(':')[0]
-            is_ip = all(part.isdigit() for part in host.split('.'))
-            subdomain = host.split('.')[0]
-            
-            # Added testserver to prevent Django's default test client from triggering a 404
-            # Skip subdomain checks for IP addresses
-            if subdomain and not is_ip and subdomain not in ['www', 'localhost', 'testserver']:
-                tenant = Tenant.objects.filter(subdomain=subdomain).first()
-                if not tenant:
-                    raise Http404("Organization not found.")
-
-        # 3) Default fallback
+        # 5) Default fallback
         if not tenant:
             tenant = Tenant.objects.filter(subdomain='default').first()
             if not tenant:
