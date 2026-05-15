@@ -51,11 +51,14 @@ class InviteAdmin(TenantAwareAdmin):
         ]
         return custom_urls + urls
 
+class DepartmentAdmin(TenantAwareAdmin):
+    exclude = ()
+
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
 admin.site.register(Tenant)
-admin.site.register(Department, TenantAwareAdmin)
+admin.site.register(Department, DepartmentAdmin)
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(ActionLog, TenantAwareAdmin)
 admin.site.register(IdeaCategory, TenantAwareAdmin)
