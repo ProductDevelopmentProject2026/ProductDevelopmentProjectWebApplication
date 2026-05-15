@@ -49,10 +49,10 @@
                         <small style="color: #888;">Shared: {{ problem.submitted_at|date:"M j, Y, g:i a" }}</small>
                     </div>
 
-                    <div style="text-align: right; min-width: 150px;">
+                    <div style="text-align: right; min-width: 150px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
                         {% if not problem.is_claimed_solved and not problem.is_solved and problem.submitted_by != request.user %}
                             <a href="{% url 'claim_solution' problem.id %}">
-                                <button style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold;">
+                                <button style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; width: 100%;">
                                     I solved this! ▲
                                 </button>
                             </a>
@@ -64,6 +64,16 @@
                             <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
                                 Perfect! Solved. ✅
                             </span>
+                        {% endif %}
+                        
+                        {% if request.user.is_superuser or request.tenant.tenant_admin == request.user %}
+                            {% if not problem.is_solved %}
+                            <a href="{% url 'admin_solve_problem' problem.id %}" style="width: 100%;">
+                                <button style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; width: 100%;">
+                                    Solve it (Admin) ⚡
+                                </button>
+                            </a>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </li>
