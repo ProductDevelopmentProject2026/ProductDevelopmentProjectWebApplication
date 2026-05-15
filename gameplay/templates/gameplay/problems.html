@@ -56,24 +56,10 @@
                                     I solved this! ▲
                                 </button>
                             </a>
-                        {% elif problem.is_claimed_solved %}
-                            <span style="background: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
-                                Solution Claimed by {{ problem.claimed_by.username }} ⌛
-                            </span>
-                        {% elif problem.is_solved %}
+                        {% elif problem.is_solved or problem.is_claimed_solved %}
                             <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
                                 Perfect! Solved. ✅
                             </span>
-                        {% endif %}
-                        
-                        {% if request.user.is_superuser or request.tenant.tenant_admin == request.user %}
-                            {% if not problem.is_solved %}
-                            <a href="{% url 'admin_solve_problem' problem.id %}" style="width: 100%;">
-                                <button style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; width: 100%;">
-                                    Solve it (Admin) ⚡
-                                </button>
-                            </a>
-                            {% endif %}
                         {% endif %}
                     </div>
                 </li>

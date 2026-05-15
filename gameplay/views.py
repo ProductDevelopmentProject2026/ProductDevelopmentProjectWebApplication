@@ -1027,7 +1027,7 @@ def problems_page(request):
         'active_tab': 'problems'
     })
 
-# 16. A helper claims they solved a problem
+# 16. A helper solves a problem directly
 @login_required
 def claim_solution(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id, tenant=request.tenant)
@@ -1047,8 +1047,16 @@ def claim_solution(request, problem_id):
             problem = form.save(commit=False)
             problem.claimed_by = request.user
             problem.is_claimed_solved = True
+            problem.is_solved = True
+            problem.solved_at = timezone.now()
             problem.save()
-            messages.success(request, f"Your solution has been sent to {problem.submitted_by.username} for review!")
+            
+            # Award points instantly
+            pt = get_point_settings(request.tenant)
+            request.user.profile.total_score += pt.problem_solved
+            request.user.profile.save()
+            
+            messages.success(request, f"Problem solved! You earned {pt.problem_solved} points.")
             return redirect('problems_page')
     else:
         form = SolutionForm(instance=problem)
@@ -1109,36 +1117,6 @@ def reject_solution(request, problem_id):
     
     messages.success(request, "Solution rejected. The problem is now listed for others to solve.")
     return redirect('profile_page')
-
-# 18.5 Admin force-solves a problem
-@login_required
-def admin_solve_problem(request, problem_id):
-    problem = get_object_or_404(Problem, pk=problem_id, tenant=request.tenant)
-    
-    is_tenant_admin = getattr(request.tenant, 'tenant_admin_id', None) == request.user.id
-    if not request.user.is_superuser and not is_tenant_admin:
-        messages.error(request, "You do not have permission to force-solve problems.")
-        return redirect('problems_page')
-
-    if problem.is_solved:
-        messages.error(request, "This problem is already solved.")
-        return redirect('problems_page')
-
-    if request.method == 'POST':
-        form = SolutionForm(request.POST, request.FILES, instance=problem)
-        if form.is_valid():
-            problem = form.save(commit=False)
-            problem.claimed_by = request.user
-            problem.is_claimed_solved = True
-            problem.is_solved = True
-            problem.solved_at = timezone.now()
-            problem.save()
-            messages.success(request, f"Problem successfully solved by admin!")
-            return redirect('problems_page')
-    else:
-        form = SolutionForm(instance=problem)
-        
-    return render(request, 'gameplay/submit_solution.html', {'form': form, 'problem': problem, 'active_tab': 'problems', 'is_admin_solve': True})
 
 # 19. Redeem Gift Card Page
 @login_required
