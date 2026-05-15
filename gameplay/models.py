@@ -65,6 +65,10 @@ class Department(TenantAwareModel):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('department_detail', args=[str(self.id)])
+
     class Meta:
         unique_together = ('tenant', 'name')
 

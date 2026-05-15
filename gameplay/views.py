@@ -800,7 +800,10 @@ def department_detail(request, department_id):
     department = get_object_or_404(Department, pk=department_id, tenant=request.tenant)
     questions = department.questions.all()
     
-    has_taken_quiz = QuizResult.objects.filter(user=request.user, department=department).exists()
+    has_taken_quiz = False
+    if request.user.is_authenticated:
+        has_taken_quiz = QuizResult.objects.filter(user=request.user, department=department).exists()
+        
     total_score = department.profile_set.aggregate(sum=Sum('total_score'))['sum'] or 0
 
     video_embed_url = None

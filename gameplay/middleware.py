@@ -20,8 +20,21 @@ class TenantMiddleware:
         tenant_slug = request.GET.get('tenant')
         if tenant_slug:
             tenant = Tenant.objects.filter(subdomain=tenant_slug).first()
+            if tenant and hasattr(request, 'session'):
+                request.session['tenant_id'] = tenant.id
             if not tenant:
                 raise Http404("Organization not found.")
+
+        # 1.5) Session fallback for IP access
+        if not tenant and hasattr(request, 'session') and request.session.get('tenant_id'):
+            tenant = Tenant.objects.filter(id=request.session.get('tenant_id')).first()
+
+        # 1.8) User Profile fallback
+        if not tenant and hasattr(request, 'user') and request.user.is_authenticated:
+            if hasattr(request.user, 'profile') and getattr(request.user.profile, 'tenant_id', None):
+                tenant = request.user.profile.tenant
+                if hasattr(request, 'session'):
+                    request.session['tenant_id'] = tenant.id
 
         # 2) Subdomain fallback
         if not tenant:
