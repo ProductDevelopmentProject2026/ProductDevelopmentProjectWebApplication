@@ -1056,6 +1056,22 @@ def claim_solution(request, problem_id):
             request.user.profile.total_score += pt.problem_solved
             request.user.profile.save()
             
+            # Create an alert for the solver (with points recorded)
+            ActionLog.objects.create(
+                tenant=request.tenant,
+                user=request.user,
+                action_name=f'Solved a problem for {problem.submitted_by.username}',
+                points=pt.problem_solved
+            )
+            
+            # Create an alert for the original submitter
+            ActionLog.objects.create(
+                tenant=request.tenant,
+                user=problem.submitted_by,
+                action_name=f'Your problem was solved by {request.user.username}!',
+                points=0
+            )
+            
             messages.success(request, f"Problem solved! You earned {pt.problem_solved} points.")
             return redirect('problems_page')
     else:
