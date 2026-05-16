@@ -692,12 +692,24 @@ def register_page(request):
         request.tenant = invite.tenant
         set_current_tenant(invite.tenant)
     else:
-        # Open registration allowed: no specific tenant scoped yet
-        request.tenant = None
-        set_current_tenant(None)
+        # Open registration: Try to resolve tenant from host or query param
+        host = request.get_host().split(':')[0]
+        is_ip = all(part.isdigit() for part in host.split('.'))
+        subdomain = host.split('.')[0]
+        
+        tenant = None
+        if subdomain and not is_ip and subdomain not in ['www', 'localhost', 'testserver']:
+            tenant = Tenant.objects.filter(subdomain=subdomain).first()
+        if not tenant:
+            tenant_slug = request.GET.get('tenant')
+            if tenant_slug:
+                tenant = Tenant.objects.filter(subdomain=tenant_slug).first()
+                
+        request.tenant = tenant
+        set_current_tenant(tenant)
 
     if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
+        form = UserRegisterForm(request.POST, tenant=request.tenant)
 
         if form.is_valid():
             try:
@@ -750,9 +762,9 @@ def register_page(request):
     else:
         if invite:
             request.session['invite_token'] = str(invite.token)
-            form = UserRegisterForm(initial={'email': invite.email})
+            form = UserRegisterForm(initial={'email': invite.email}, tenant=request.tenant)
         else:
-            form = UserRegisterForm()
+            form = UserRegisterForm(tenant=request.tenant)
 
     return render(request, 'gameplay/register.html', {'form': form, 'token': token})
 

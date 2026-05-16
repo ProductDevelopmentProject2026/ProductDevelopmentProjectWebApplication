@@ -111,10 +111,16 @@ class UserRegisterForm(UserCreationForm):
         fields = ('first_name', 'last_name', 'email',)
 
     def __init__(self, *args, **kwargs):
+        self.tenant = kwargs.pop('tenant', None)
         super().__init__(*args, **kwargs)
         # Hide the username field — we use email as the username
         if 'username' in self.fields:
             del self.fields['username']
+            
+        if self.tenant:
+            self.fields['department'].queryset = Department.objects.filter(tenant=self.tenant)
+        else:
+            self.fields['department'].queryset = Department.objects.none()
 
     def clean(self):
         cleaned_data = super().clean()
