@@ -1155,6 +1155,7 @@ def redeem_page(request):
         
         # Define reward costs and values
         rewards = {
+            '20_money': {'points': 100, 'euros': 20, 'name': '20€ Direct to Card'},
             '20': {'points': 100, 'euros': 20, 'name': '20€ Gift Card'},
             '50': {'points': 200, 'euros': 50, 'name': '50€ Gift Card'},
             '100': {'points': 350, 'euros': 100, 'name': '100€ VIP Gift Card'},
@@ -1168,13 +1169,21 @@ def redeem_page(request):
                 request.user.profile.save()
                 
                 from .models import RedeemedReward
+                
+                store = store_choice
+                if reward_tier == '20_money':
+                    store = 'Direct to Card'
+
                 RedeemedReward.objects.create(
                     user=request.user,
-                    store=store_choice,
+                    store=store,
                     amount=reward['euros']
                 )
 
-                messages.success(request, f"Success! You have redeemed {reward['points']} points for a {reward['name']} at {store_choice}! Check your profile balance.")
+                if reward_tier == '20_money':
+                    messages.success(request, f"Success! You have redeemed {reward['points']} points for {reward['name']}! Check your profile balance.")
+                else:
+                    messages.success(request, f"Success! You have redeemed {reward['points']} points for a {reward['name']} at {store_choice}! Check your profile balance.")
             else:
                 messages.error(request, f"Not enough points! You need at least {reward['points']} points for this reward.")
         else:

@@ -49,6 +49,15 @@
                     
                     <div style="display: flex; flex-direction: column; gap: 15px;">
                         <label style="display: flex; align-items: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                            <input type="radio" name="reward_tier" value="20_money" required style="margin-right: 15px; transform: scale(1.5);">
+                            <div style="flex-grow: 1;">
+                                <strong style="font-size: 1.1em; color: #1f2937;">20€ Direct to Card</strong>
+                                <span style="display: inline-block; background: #dcfce7; color: #047857; padding: 3px 8px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-left: 10px;">100 points</span>
+                                <div style="color: #6b7280; font-size: 0.9em; margin-top: 4px;">Simple money added directly to your card.</div>
+                            </div>
+                        </label>
+
+                        <label style="display: flex; align-items: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
                             <input type="radio" name="reward_tier" value="20" required style="margin-right: 15px; transform: scale(1.5);">
                             <div style="flex-grow: 1;">
                                 <strong style="font-size: 1.1em; color: #1f2937;">20€ Gift Card</strong>
@@ -77,9 +86,9 @@
                     </div>
                 </div>
 
-                <div style="margin-bottom: 20px; text-align: left; padding: 0 40px; margin-top: 30px;">
+                <div id="store_choice_div" style="margin-bottom: 20px; text-align: left; padding: 0 40px; margin-top: 30px;">
                     <label style="font-weight: bold; color: #4b5563; display: block; margin-bottom: 10px;">Select Store:</label>
-                    <select name="store_choice" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 1.1em; color: #1f2937; background-color: #f9fafb;">
+                    <select id="store_choice" name="store_choice" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 1.1em; color: #1f2937; background-color: #f9fafb;">
                         <option value="" disabled selected>-- Choose your favorite store --</option>
                         <option value="Maxima">Maxima</option>
                         <option value="IKI">IKI</option>
@@ -100,4 +109,20 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.querySelectorAll('input[name="reward_tier"]').forEach((elem) => {
+            elem.addEventListener("change", function(event) {
+                var storeDiv = document.getElementById("store_choice_div");
+                var storeSelect = document.getElementById("store_choice");
+                if (event.target.value === "20_money") {
+                    storeDiv.style.display = "none";
+                    storeSelect.removeAttribute("required");
+                } else {
+                    storeDiv.style.display = "block";
+                    storeSelect.setAttribute("required", "required");
+                }
+            });
+        });
+    </script>
 {% endblock %}
