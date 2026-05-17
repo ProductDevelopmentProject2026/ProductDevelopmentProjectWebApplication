@@ -121,9 +121,32 @@ def company_admin_dashboard(request):
         messages.success(request, "Badge settings updated successfully!")
         return redirect('company_admin_dashboard')
     
+    # Handle Gift Card Stores
+    from .models import GiftCardStore
+    if request.method == 'POST':
+        if 'add_store' in request.POST:
+            store_name = request.POST.get('new_store_name', '').strip()
+            if store_name:
+                GiftCardStore.objects.get_or_create(tenant=request.tenant, name=store_name)
+                messages.success(request, f"Store '{store_name}' added successfully!")
+            return redirect('company_admin_dashboard')
+            
+        if 'delete_store' in request.POST:
+            store_id = request.POST.get('delete_store_id')
+            if store_id:
+                try:
+                    store = GiftCardStore.objects.get(id=store_id, tenant=request.tenant)
+                    store_name = store.name
+                    store.delete()
+                    messages.success(request, f"Store '{store_name}' removed.")
+                except GiftCardStore.DoesNotExist:
+                    pass
+            return redirect('company_admin_dashboard')
+
     # Ensure badges exist
     get_user_badges(request.user, request.tenant)
     all_badges = Badge.objects.filter(tenant=request.tenant).order_by('min_points')
+    giftcard_stores = GiftCardStore.objects.filter(tenant=request.tenant)
     
     return render(request, 'gameplay/company_admin_dashboard.html', {
         'tenant': request.tenant,
@@ -132,6 +155,7 @@ def company_admin_dashboard(request):
         'trainings': trainings,
         'point_settings': pt,
         'all_badges': all_badges,
+        'giftcard_stores': giftcard_stores,
         'active_tab': 'admin',
     })
 
@@ -1181,9 +1205,19 @@ def redeem_page(request):
                 )
 
                 if reward_tier == '20_money':
+                    action_msg = f"Redeemed {reward['points']} points for {reward['name']}"
                     messages.success(request, f"Success! You have redeemed {reward['points']} points for {reward['name']}! Check your profile balance.")
                 else:
+                    action_msg = f"Redeemed {reward['points']} points for a {reward['name']} at {store_choice}"
                     messages.success(request, f"Success! You have redeemed {reward['points']} points for a {reward['name']} at {store_choice}! Check your profile balance.")
+
+                from .models import ActionLog
+                ActionLog.objects.create(
+                    tenant=request.tenant,
+                    user=request.user,
+                    action_name=action_msg,
+                    points=-reward['points']
+                )
             else:
                 messages.error(request, f"Not enough points! You need at least {reward['points']} points for this reward.")
         else:
@@ -1191,7 +1225,13 @@ def redeem_page(request):
             
         return redirect('redeem_page')
         
-    return render(request, 'gameplay/redeem.html', {'profile': request.user.profile, 'active_tab': 'redeem'})
+    from .models import GiftCardStore
+    stores = GiftCardStore.objects.filter(tenant=request.tenant)
+    return render(request, 'gameplay/redeem.html', {
+        'profile': request.user.profile, 
+        'stores': stores,
+        'active_tab': 'redeem'
+    })
 
 # 20. Admin Bulk Invite Upload
 @staff_member_required
@@ -1498,6 +1538,9 @@ def alerts_page(request):
     
     # Show user's own notifications + tenant-wide logs for admins
     my_logs = ActionLog.objects.filter(tenant=tenant, user=request.user).select_related('user').order_by('-date_created')[:30]
+    
+    # Mark user's logs as read
+    ActionLog.objects.filter(tenant=tenant, user=request.user, is_read=False).update(is_read=True)
     
     # For superusers, also show all tenant activity
     if request.user.is_superuser:

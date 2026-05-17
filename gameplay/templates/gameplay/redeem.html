@@ -90,10 +90,16 @@
                     <label style="font-weight: bold; color: #4b5563; display: block; margin-bottom: 10px;">Select Store:</label>
                     <select id="store_choice" name="store_choice" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 1.1em; color: #1f2937; background-color: #f9fafb;">
                         <option value="" disabled selected>-- Choose your favorite store --</option>
-                        <option value="Maxima">Maxima</option>
-                        <option value="IKI">IKI</option>
-                        <option value="Nike">Nike</option>
-                        <option value="Adidas">Adidas</option>
+                        {% if stores %}
+                            {% for store in stores %}
+                                <option value="{{ store.name }}">{{ store.name }}</option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="Maxima">Maxima</option>
+                            <option value="IKI">IKI</option>
+                            <option value="Nike">Nike</option>
+                            <option value="Adidas">Adidas</option>
+                        {% endif %}
                     </select>
                 </div>
 

@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.urls import path
 from .views import bulk_invite_upload
-from .models import Tenant, Department, Profile, ActionLog, IdeaCategory, Idea, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, TenantAwareModel, Invite
+from .models import Tenant, Department, Profile, ActionLog, IdeaCategory, Idea, Training, Question, QuizResult, Lesson, TrainingFeedback, Problem, TenantAwareModel, Invite, GiftCardStore
 
 class TenantAwareAdmin(admin.ModelAdmin):
     exclude = ('tenant',)
@@ -70,3 +70,4 @@ admin.site.register(Lesson, TenantAwareAdmin)
 admin.site.register(TrainingFeedback, TenantAwareAdmin)
 admin.site.register(Problem, TenantAwareAdmin)
 admin.site.register(Invite, InviteAdmin)
+admin.site.register(GiftCardStore, TenantAwareAdmin)

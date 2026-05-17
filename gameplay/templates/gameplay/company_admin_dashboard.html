@@ -132,6 +132,35 @@
         </form>
     </div>
 
+    <!-- GIFT CARD STORES -->
+    <div style="margin-top: 40px;">
+        <div class="section-header">
+            <h3 style="color: #e67e22; margin: 0; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.05em;">🛍️ Gift Card Stores</h3>
+        </div>
+        <p style="color: #6b7280; font-size: 0.9em; margin-bottom: 15px;">
+            Add or remove the store options where users can redeem their points (e.g. Amazon, Starbucks, Maxima).
+        </p>
+        <form method="post" style="margin-bottom: 20px; display: flex; gap: 10px;">
+            {% csrf_token %}
+            <input type="text" name="new_store_name" placeholder="Enter new store name..." required style="flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
+            <button type="submit" name="add_store" class="save-btn" style="background: linear-gradient(135deg, #e67e22, #d35400);">+ Add Store</button>
+        </form>
+        <ul style="line-height: 2.2; list-style: none; padding: 0;">
+            {% for store in giftcard_stores %}
+            <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f3f4f6; background: #fafbfc; margin-bottom: 5px; border-radius: 6px;">
+                <span><strong>{{ store.name }}</strong></span>
+                <form method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_store_id" value="{{ store.id }}">
+                    <button type="submit" name="delete_store" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85em; text-decoration: underline;">Remove</button>
+                </form>
+            </li>
+            {% empty %}
+            <li style="padding: 10px; color: #6b7280; background: #f9fafb; border-radius: 6px; text-align: center;">No custom stores added. Users will see default options.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
     <!-- DEPARTMENTS & POINTS -->
     <div style="margin-top: 40px;">
         <div class="section-header">

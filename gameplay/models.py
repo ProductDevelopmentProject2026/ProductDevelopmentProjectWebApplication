@@ -95,6 +95,7 @@ class ActionLog(TenantAwareModel):
     action_name = models.CharField(max_length=200) # e.g. "Passed Safety Test"
     points = models.IntegerField(default=10)
     date_created = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} - {self.action_name} (+{self.points})"
@@ -226,6 +227,17 @@ class RedeemedReward(TenantAwareModel):
 
     def __str__(self):
         return f"{self.user.username} - {self.store} {self.amount}€"
+
+
+class GiftCardStore(TenantAwareModel):
+    name = models.CharField(max_length=100, help_text="e.g. Maxima, Amazon, Spotify")
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('tenant', 'name')
+
+    def __str__(self):
+        return self.name
 
 
 class PointSettings(TenantAwareModel):
