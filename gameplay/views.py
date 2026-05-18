@@ -729,8 +729,21 @@ def register_page(request):
             if tenant_slug:
                 tenant = Tenant.objects.filter(subdomain=tenant_slug).first()
                 
+        # If still no tenant, fallback to EVOLUTION as requested
+        if not tenant:
+            tenant = Tenant.objects.filter(name__iexact='EVOLUTION').first() or Tenant.objects.filter(subdomain__iexact='evolution').first()
+            
         request.tenant = tenant
         set_current_tenant(tenant)
+
+    if not invite:
+        is_evolution = False
+        if request.tenant and (request.tenant.subdomain.lower() == 'evolution' or request.tenant.name.lower() == 'evolution'):
+            is_evolution = True
+            
+        if not is_evolution:
+            messages.error(request, "Registration is by invitation only for this organization.")
+            return redirect('login')
 
     if request.method == 'POST':
         form = UserRegisterForm(request.POST, tenant=request.tenant)
