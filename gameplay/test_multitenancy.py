@@ -10,6 +10,7 @@ class MultiTenancyTests(TestCase):
         self.client = Client()
         self.tenant1 = Tenant.objects.create(name="Acme Corp", subdomain="acme")
         self.tenant2 = Tenant.objects.create(name="Globex", subdomain="globex")
+        self.tenant3 = Tenant.objects.create(name="EVOLUTION", subdomain="evolution")
         
         self.user = User.objects.create_user(username="testuser", password="password")
         self.user.profile.tenant = self.tenant1
@@ -83,9 +84,14 @@ class MultiTenancyTests(TestCase):
         response = self.client.get(f'/signup/?token={invite.token}', HTTP_HOST='acme.localhost:8000')
         self.assertEqual(response.status_code, 200)
 
-    def test_missing_invite_allows_registration(self):
+    def test_missing_invite_blocks_registration_except_evolution(self):
+        # acme is blocked
         response = self.client.get('/signup/', HTTP_HOST='acme.localhost:8000')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        
+        # evolution is allowed
+        response_evo = self.client.get('/signup/', HTTP_HOST='evolution.localhost:8000')
+        self.assertEqual(response_evo.status_code, 200)
 
     def test_invite_for_different_tenant_rejected(self):
         set_current_tenant(self.tenant1)
@@ -102,7 +108,16 @@ class MultiTenancyTests(TestCase):
         User.objects.create_user(username="newuser_used", email="new@acme.com", password="password")
         set_current_tenant(None)
         response = self.client.get(f'/signup/?token={invite.token}', HTTP_HOST='acme.localhost:8000')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302) # Normal reg blocked for acme
+
+        # evolution allows normal reg fallback
+        set_current_tenant(self.tenant3)
+        invite_evo = Invite.objects.create(email="new@evo.com", tenant=self.tenant3, used_at=timezone.now())
+        User.objects.create_user(username="evo_used", email="new@evo.com", password="password")
+        set_current_tenant(None)
+        
+        response_evo = self.client.get(f'/signup/?token={invite_evo.token}', HTTP_HOST='evolution.localhost:8000')
+        self.assertEqual(response_evo.status_code, 200)
 
     def test_quiz_submission_creates_data_with_correct_tenant(self):
         set_current_tenant(self.tenant1)
