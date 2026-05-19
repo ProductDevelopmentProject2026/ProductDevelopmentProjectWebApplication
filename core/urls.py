@@ -10,7 +10,8 @@ from gameplay.views import ( analytics_page, alerts_page, dashboard, departments
     take_quiz, register_page, manage_lessons, view_lesson,
     department_detail, add_department_question, take_department_quiz, accept_idea,
     submit_feedback, problems_page, claim_solution, confirm_solved, reject_solution,
-    redeem_page, company_admin_dashboard, edit_employee_profile, edit_department
+    redeem_page, company_admin_dashboard, edit_employee_profile, edit_department,
+    landing_page
 )
 
 urlpatterns = [
@@ -18,7 +19,8 @@ urlpatterns = [
     path('company-admin/', company_admin_dashboard, name='company_admin_dashboard'),
     path('company-admin/edit-employee/<int:profile_id>/', edit_employee_profile, name='edit_employee_profile'),
     path('company-admin/edit-department/<int:dept_id>/', edit_department, name='edit_department'),
-    path('', dashboard, name='dashboard'),                 
+    path('', dashboard, name='dashboard'),
+    path('landing/', landing_page, name='landing_page'),
     path('departments/', departments_page, name='departments_page'), 
     path('ideas/', ideas_page, name='ideas_page'),         
     path('vote/<int:idea_id>/', vote_idea, name='vote_idea'),

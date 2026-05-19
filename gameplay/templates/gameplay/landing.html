@@ -1,0 +1,271 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROVEKO | Continuous Improvement Portal</title>
+    <meta name="description" content="Empower your workforce with PROVEKO. Our continuous improvement platform uses gamification to drive real change, turning everyday challenges into opportunities for growth.">
+    <style>
+        /* Modern Color Palette based on the PROVEKO portal */
+        :root {
+            --bg-color: #f4f3ef; /* Light cream background */
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --primary-blue: #2563eb;
+            --primary-green: #16a34a;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            background-color: var(--bg-color);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; }
+
+        /* Navigation */
+        header {
+            background-color: var(--card-bg);
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+            margin-right: 10px;
+        }
+
+        .btn-outline:hover {
+            background: #eff6ff;
+        }
+
+        .btn-solid {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        .btn-solid:hover {
+            background-color: #15803d;
+            transform: translateY(-1px);
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 5rem 5% 3rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            color: #111827;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Video Section */
+        .video-container {
+            max-width: 1000px;
+            margin: 0 auto 5rem auto;
+            padding: 0 5%;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            background-color: #1a1a1a; /* Dark background for placeholder */
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 4px solid var(--card-bg);
+        }
+
+        .video-wrapper iframe,
+        .video-wrapper video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            object-fit: cover;
+        }
+
+        /* Placeholder text style */
+        .video-placeholder-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffffff;
+            font-family: inherit;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .video-placeholder-text h2 {
+            margin: 0 0 0.5rem 0;
+        }
+
+        .video-placeholder-text p {
+            margin: 0;
+            opacity: 0.7;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 5%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            background: #eff6ff;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-top: 0;
+            color: #111827;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 5%;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            margin-top: 4rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">PROVEKO</div>
+        <div>
+            <a href="#demo-video" class="btn btn-outline">Watch Video</a>
+            <a href="{% url 'login' %}" class="btn btn-solid">Get Demo</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Transform Company Problems into Employee Solutions</h1>
+        <p>Empower your workforce with PROVEKO. Our continuous improvement platform uses gamification to drive real change, turning everyday challenges into opportunities for growth.</p>
+    </section>
+
+    <section class="video-container" id="demo-video">
+        <div class="video-wrapper">
+            {# ---------------------------------------------------------- #}
+            {# Option A: Local .mp4 video (uncomment and place your file  #}
+            {#   in gameplay/static/gameplay/videos/proveko-demo.mp4)     #}
+            {#                                                            #}
+            {# <video src="{% static 'gameplay/videos/proveko-demo.mp4' %}" controls preload="metadata"></video> #}
+            {# ---------------------------------------------------------- #}
+
+            {# Option B: Placeholder (shown until you add the video)      #}
+            <div class="video-placeholder-text">
+                <h2>Product Walkthrough Video</h2>
+                <p>Place your .mp4 file in static/gameplay/videos/ and uncomment Option A above</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Continuous Improvement</h3>
+            <p>Embrace the Kaizen philosophy. Foster a workplace culture where ongoing, incremental changes lead to massive operational efficiency and better workflows.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">💡</div>
+            <h3>Idea Implementation</h3>
+            <p>Give your employees a voice. Provide a structured, transparent pathway for staff to submit ideas, collaborate on solutions, and solve core company problems.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🎮</div>
+            <h3>Gamification</h3>
+            <p>Boost engagement and participation. Reward employees for their contributions, track progress on leaderboards, and make solving business challenges a rewarding experience.</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 PROVEKO Product Development Project. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

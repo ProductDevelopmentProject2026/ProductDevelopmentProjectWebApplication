@@ -8,8 +8,8 @@ class TenantMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Bypass tenant resolution and checks for admin, auth, and static/media routes
-        if request.path.startswith(('/admin/', '/login/', '/logout/', '/static/', '/media/', '/signup/', '/register/')):
+        # Bypass tenant resolution and checks for admin, auth, static/media, and landing page
+        if request.path.startswith(('/admin/', '/login/', '/logout/', '/static/', '/media/', '/signup/', '/register/', '/landing/')):
             request.tenant = None
             set_current_tenant(None)
             return self.get_response(request)

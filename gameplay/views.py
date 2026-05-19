@@ -262,6 +262,12 @@ def edit_company_user(request, user_id):
         
     return render(request, 'gameplay/edit_company_user.html', {'profile': profile, 'departments': departments, 'active_tab': 'admin'})
 
+# 0b. Public Landing Page
+def landing_page(request):
+    """Public-facing landing page — no login required."""
+    return render(request, 'gameplay/landing.html')
+
+
 # 1. Home Page (Welcome)
 @login_required
 def dashboard(request):

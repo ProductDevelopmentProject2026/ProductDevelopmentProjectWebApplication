@@ -28,7 +28,7 @@
         <p><strong>Bonuses:</strong> <span style="color: #27ae60; font-weight: bold; font-size: 1.2em;">{{ profile.bonus_euros }} Euros</span></p>
     </div>
 
-    <div class="schedule-card" style="margin-top: 20px; border-top: 5px solid #27ae60;">
+    <div class="schedule-card" style="margin-top: 20px;">
         <h3 class="schedule-title" style="margin-bottom: 15px; color: #2c3e50;">📊 Innovation & Help Stats</h3>
         
         <div style="display: flex; gap: 20px;">
@@ -53,7 +53,7 @@
     </div>
 
     {% if training_stats %}
-        <div class="schedule-card" style="border-top: 5px solid #3498db;">
+        <div class="schedule-card" style="">
             <h3 class="schedule-title" style="color: #2c3e50; margin-bottom: 20px;">📈 My Hosted Trainings Analytics</h3>
             
             {% for stat in training_stats %}
@@ -90,7 +90,7 @@
         </div>
     {% endif %}
 
-    <div class="schedule-card" style="border-top: 5px solid #9b59b6;">
+    <div class="schedule-card" style="">
         <h3 class="schedule-title" style="color: #2c3e50; margin-bottom: 15px;">🎁 My Redeemed Gift Cards</h3>
         {% if redeemed_rewards %}
             <ul style="list-style: none; padding: 0;">

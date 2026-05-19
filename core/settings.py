@@ -20,6 +20,17 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 env_hosts = config('ALLOWED_HOSTS', default='', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
 ALLOWED_HOSTS = env_hosts + ['.vercel.app', 'localhost', '127.0.0.1', '*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://*.localhost:8000',
+    'http://*.127.0.0.1:8000',
+    'http://*.localhost:8080',
+    'http://*.127.0.0.1:8080',
+]
+
 
 # Application definition
 

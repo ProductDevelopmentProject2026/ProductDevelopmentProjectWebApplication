@@ -115,7 +115,7 @@
 
     <!-- Badges Section -->
     {% if all_badges %}
-    <div class="schedule-card" style="border-top: 5px solid #f59e0b;">
+    <div class="schedule-card" style="">
         <h3 class="schedule-title" style="color: #2c3e50;">🏅 My Badges</h3>
         
         {% if next_badge %}
@@ -149,7 +149,7 @@
     </div>
     {% endif %}
 
-    <div class="schedule-card" style="margin-top: 20px; border-top: 5px solid #27ae60;">
+    <div class="schedule-card" style="margin-top: 20px;">
         <h3 class="schedule-title" style="margin-bottom: 15px; color: #2c3e50;">📊 Innovation & Help Stats</h3>
         
         <div style="display: flex; gap: 20px;">
@@ -184,7 +184,7 @@
         </ul>
     </div>
 
-    <div class="schedule-card" style="border-top: 5px solid #f39c12;">
+    <div class="schedule-card" style="">
         <h3 class="schedule-title">My Shared Problems & Solutions</h3>
         <p style="color: #7f8c8d; margin-top: 0;">Review solutions to the problems you have shared.</p>
         <ul style="padding-left: 0; list-style: none; border-left: 3px solid #f39c12; padding-left: 15px;">
@@ -237,7 +237,7 @@
     </div>
 
     {% if training_stats %}
-        <div class="schedule-card" style="border-top: 5px solid #3498db;">
+        <div class="schedule-card" style="">
             <h3 class="schedule-title" style="color: #2c3e50; margin-bottom: 20px;">📈 My Hosted Trainings Analytics</h3>
             
             {% for stat in training_stats %}
@@ -274,7 +274,7 @@
         </div>
     {% endif %}
 
-    <div class="schedule-card" style="border-top: 5px solid #9b59b6;">
+    <div class="schedule-card" style="">
         <h3 class="schedule-title" style="color: #2c3e50; margin-bottom: 15px;">🎁 My Redeemed Gift Cards</h3>
         {% if redeemed_rewards %}
             <ul style="list-style: none; padding: 0;">
