@@ -1,4 +1,4 @@
-﻿{% extends 'gameplay/base.html' %}
+{% extends 'gameplay/base.html' %}
 {% block content %}
 <style>
     .analytics-header { margin-bottom: 32px; }
@@ -37,9 +37,9 @@
 
 <div class="analytics-header">
     <div class="action-buttons">
-        <button class="action-btn">↓ Excel</button>
-        <button class="action-btn">🖨 PDF</button>
-        <button class="action-btn">← Dashboard</button>
+        <button class="action-btn" id="exportExcelBtn">↓ Excel</button>
+        <button class="action-btn" id="exportPdfBtn">🖨 PDF</button>
+        <a href="{% url 'dashboard' %}" class="action-btn" style="text-decoration: none; color: var(--text-primary); display: inline-flex; align-items: center;">← Dashboard</a>
     </div>
     <p>WORKFORCE ANALYTICS</p>
     <h1>Performance & Engagement</h1>
@@ -184,4 +184,62 @@
         }
     });
 </script>
+
+<script>
+    // ── Excel Export (CSV) ──
+    document.getElementById('exportExcelBtn').addEventListener('click', function() {
+        const rows = [['Metric', 'Value']];
+
+        // Collect all stat cards
+        document.querySelectorAll('.stat-card').forEach(function(card) {
+            const label = card.querySelector('.stat-label');
+            const value = card.querySelector('.stat-value');
+            if (label && value) {
+                rows.push([label.textContent.trim(), value.textContent.trim()]);
+            }
+            const sub = card.querySelector('.stat-sub');
+            if (sub) {
+                rows.push(['  └ Detail', sub.textContent.trim()]);
+            }
+            const pill = card.querySelector('.stat-pill');
+            if (pill) {
+                rows.push(['  └ Rate', pill.textContent.trim()]);
+            }
+        });
+
+        // Build CSV content
+        let csvContent = '\uFEFF'; // BOM for Excel UTF-8
+        rows.forEach(function(row) {
+            csvContent += row.map(function(cell) {
+                return '"' + cell.replace(/"/g, '""') + '"';
+            }).join(',') + '\n';
+        });
+
+        // Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'prokevo_analytics_' + new Date().toISOString().slice(0, 10) + '.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+    });
+
+    // ── PDF Export (Print) ──
+    document.getElementById('exportPdfBtn').addEventListener('click', function() {
+        window.print();
+    });
+</script>
+
+<style>
+    /* Print-friendly styles for PDF export */
+    @media print {
+        .navbar, .action-buttons, .theme-toggle { display: none !important; }
+        body { background: white !important; }
+        .content-container { padding: 0 !important; }
+        .stat-card, .chart-card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        .charts-grid { grid-template-columns: 1fr !important; }
+    }
+</style>
 {% endblock %}
