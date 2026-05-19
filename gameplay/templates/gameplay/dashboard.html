@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block container %}
-<div style="padding: 20px 40px;">
+<div style="padding: 10px 20px;">
 
     <style>
         #campus-map-wrapper {
@@ -11,7 +11,7 @@
         }
         #campus-map-container {
             width: 100%;
-            height: 85vh;
+            height: 90vh;
             background: linear-gradient(180deg, #e8f4f8 0%, #dff0f7 100%);
             position: relative;
             overflow: hidden;
@@ -22,17 +22,17 @@
         }
         .map-header {
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: 8px;
         }
         .map-header h2 {
-            font-size: 2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--text-primary, #1a2b3c);
-            margin-bottom: 8px;
+            margin-bottom: 2px;
         }
         .map-header p {
             color: var(--text-secondary, #7b8fa0);
-            font-size: 0.95rem;
+            font-size: 0.82rem;
             margin: 0;
         }
         .map-live-badge {
@@ -46,7 +46,7 @@
             font-size: 0.8rem;
             font-weight: 600;
             color: #2d8a5e;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
         }
         .map-live-badge::before {
             content: '';
@@ -92,12 +92,12 @@
     </style>
 
     <div class="map-header">
-        <span class="map-live-badge">{{ departments|length }} Department{{ departments|length|pluralize }} Live</span>
         <h2>Campus Map</h2>
         <p>Explore the 3D campus. The taller the building, the more points the department has.</p>
     </div>
 
     <div id="campus-map-wrapper">
+        <span class="map-live-badge" style="position: absolute; top: 16px; left: 16px; z-index: 10; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">{{ departments|length }} Department{{ departments|length|pluralize }} Live</span>
         <div id="campus-map-container">
             <!-- Three.js Canvas will be appended here -->
         </div>
