@@ -822,7 +822,8 @@
 
         // ── Smooth hover state tracking (per-group target/current scale) ──
         const groupScales = new Map();  // deptId -> { current: 1, target: 1 }
-        const groupEdgeOpacities = new Map(); // deptId -> { current, target }
+        const groupEdgeOpacities = new Map(); // deptId -> { current, target, mat, dirty }
+        const crownRefs = [];  // cached crown meshes for O(1) animation
 
         // ── Animate points bars ──
         const maxPts = Math.max(...departments.map(d => d.points), 1);
@@ -968,7 +969,7 @@
             base.receiveShadow = true;
             group.add(base);
 
-            // ── Edge outlines ──
+            // ── Edge outlines (cached directly for zero-traverse updates) ──
             const edgesGeo = new THREE.EdgesGeometry(bodyGeo);
             const edgesMat = new THREE.LineBasicMaterial({
                 color: deptColor,
@@ -980,6 +981,7 @@
             group.add(edges);
 
             // ── Crown glow for top department ──
+            let crownMesh = null;
             if (dept.is_top) {
                 const crownGeo = new THREE.RingGeometry(10, 12, 32);
                 const crownMat = new THREE.MeshBasicMaterial({
@@ -988,18 +990,21 @@
                     opacity: 0.3,
                     side: THREE.DoubleSide,
                 });
-                const crown = new THREE.Mesh(crownGeo, crownMat);
-                crown.rotation.x = -Math.PI / 2;
-                crown.position.y = 0.15;
-                crown.userData.isCrown = true;
-                group.add(crown);
+                crownMesh = new THREE.Mesh(crownGeo, crownMat);
+                crownMesh.rotation.x = -Math.PI / 2;
+                crownMesh.position.y = 0.15;
+                group.add(crownMesh);
             }
 
             group.position.set(dept.x, 0, dept.z);
             scene.add(group);
             buildingGroups.push(group);
+
+            // Cache refs for O(1) per-frame updates (no traverse needed)
+            const initOpacity = isDark ? 0.35 : 0.2;
             groupScales.set(dept.id, { current: 1, target: 1 });
-            groupEdgeOpacities.set(dept.id, { current: isDark ? 0.35 : 0.2, target: isDark ? 0.35 : 0.2 });
+            groupEdgeOpacities.set(dept.id, { current: initOpacity, target: initOpacity, mat: edgesMat, dirty: false });
+            if (crownMesh) crownRefs.push(crownMesh);
 
             // ── CSS2D Label ──
             const labelDiv = document.createElement('div');
@@ -1085,14 +1090,14 @@
                     const sc = groupScales.get(currentHoveredId);
                     const eo = groupEdgeOpacities.get(currentHoveredId);
                     if (sc) sc.target = 1;
-                    if (eo) eo.target = isDark ? 0.35 : 0.2;
+                    if (eo) { eo.target = isDark ? 0.35 : 0.2; eo.dirty = true; }
                 }
                 // Hover new
                 if (newHoveredId != null) {
                     const sc = groupScales.get(newHoveredId);
                     const eo = groupEdgeOpacities.get(newHoveredId);
                     if (sc) sc.target = 1.05;
-                    if (eo) eo.target = 0.85;
+                    if (eo) { eo.target = 0.85; eo.dirty = true; }
                 }
                 currentHoveredId = newHoveredId;
             }
@@ -1133,90 +1138,91 @@
             new ResizeObserver(onResize).observe(container);
         }
 
-        // ── Animation loop — everything interpolated per-frame for silky smoothness ──
+        // ── Animation loop — optimised: no traverse(), cached refs, fast snapping ──
         const clock = new THREE.Clock();
-        const lerpSmooth = 0.035;    // camera/target lerp (lower = smoother)
-        const hoverLerp = 0.07;      // hover scale/opacity lerp
 
         function animate() {
             requestAnimationFrame(animate);
-            const dt = Math.min(clock.getDelta(), 0.05);  // cap delta for tab-away
+            const dt = Math.min(clock.getDelta(), 0.05);
             const elapsed = clock.getElapsedTime();
             const dtFactor = dt * 60;  // normalise to ~60fps
 
-            // ── Smooth camera fly-to ──
+            // ── Camera fly-to (fast lerp + generous snap threshold) ──
             if (targetFocus) {
-                controls.target.lerp(targetFocus, lerpSmooth * dtFactor);
-                if (controls.target.distanceTo(targetFocus) < 0.15) {
+                controls.target.lerp(targetFocus, 0.08 * dtFactor);
+                if (controls.target.distanceTo(targetFocus) < 1.0) {
                     controls.target.copy(targetFocus);
                     targetFocus = null;
                 }
             }
             if (targetCameraPos) {
-                camera.position.lerp(targetCameraPos, lerpSmooth * dtFactor);
-                if (camera.position.distanceTo(targetCameraPos) < 0.3) {
+                camera.position.lerp(targetCameraPos, 0.07 * dtFactor);
+                if (camera.position.distanceTo(targetCameraPos) < 1.5) {
                     camera.position.copy(targetCameraPos);
                     targetCameraPos = null;
                 }
             }
 
-            // ── Smooth zoom button animation ──
+            // ── Zoom button animation ──
             if (zoomTarget) {
-                camera.position.lerp(zoomTarget, 0.06 * dtFactor);
-                if (camera.position.distanceTo(zoomTarget) < 0.3) {
+                camera.position.lerp(zoomTarget, 0.09 * dtFactor);
+                if (camera.position.distanceTo(zoomTarget) < 1.0) {
                     camera.position.copy(zoomTarget);
                     zoomTarget = null;
                 }
             }
 
-            // ── Smooth hover scale & edge opacity per building ──
+            // ── Hover scale & edge opacity (cached mat ref, skip when settled) ──
             buildingGroups.forEach(g => {
                 const deptId = g.userData.deptId;
                 const sc = groupScales.get(deptId);
-                const eo = groupEdgeOpacities.get(deptId);
                 if (sc) {
-                    sc.current += (sc.target - sc.current) * hoverLerp * dtFactor;
-                    g.scale.setScalar(sc.current);
+                    const diff = sc.target - sc.current;
+                    if (Math.abs(diff) > 0.001) {
+                        sc.current += diff * 0.1 * dtFactor;
+                        g.scale.setScalar(sc.current);
+                    } else if (sc.current !== sc.target) {
+                        sc.current = sc.target;
+                        g.scale.setScalar(sc.current);
+                    }
                 }
-                if (eo) {
-                    eo.current += (eo.target - eo.current) * hoverLerp * dtFactor;
-                    g.traverse(child => {
-                        if (child.isLineSegments && child.material) {
-                            child.material.opacity = eo.current;
-                        }
-                    });
+                const eo = groupEdgeOpacities.get(deptId);
+                if (eo && eo.dirty) {
+                    const ediff = eo.target - eo.current;
+                    if (Math.abs(ediff) > 0.005) {
+                        eo.current += ediff * 0.1 * dtFactor;
+                        eo.mat.opacity = eo.current;
+                    } else {
+                        eo.current = eo.target;
+                        eo.mat.opacity = eo.current;
+                        eo.dirty = false;
+                    }
                 }
             });
 
-            // ── Animate particles — gentle drift up + horizontal sway ──
+            // ── Particles ──
             const posArr = particleGeo.attributes.position.array;
             for (let i = 0; i < particleCount; i++) {
-                const speed = 0.006 + (i % 7) * 0.002;
-                posArr[i * 3 + 1] += speed * dtFactor;
-                // gentle horizontal sway
+                posArr[i * 3 + 1] += (0.006 + (i % 7) * 0.002) * dtFactor;
                 posArr[i * 3]     += Math.sin(elapsed * 0.4 + i * 0.7) * 0.008 * dtFactor;
                 posArr[i * 3 + 2] += Math.cos(elapsed * 0.3 + i * 1.1) * 0.006 * dtFactor;
                 if (posArr[i * 3 + 1] > 70) posArr[i * 3 + 1] = 3;
             }
             particleGeo.attributes.position.needsUpdate = true;
 
-            // ── Animate foliage sway ──
-            foliageMeshes.forEach(f => {
+            // ── Foliage sway ──
+            for (let i = 0; i < foliageMeshes.length; i++) {
+                const f = foliageMeshes[i];
                 const d = f.userData;
-                const sway = Math.sin(elapsed * d.swaySpeed + d.swayOffset) * d.swayAmount;
-                f.position.x = d.baseX + sway;
+                f.position.x = d.baseX + Math.sin(elapsed * d.swaySpeed + d.swayOffset) * d.swayAmount;
                 f.position.y = d.baseY + Math.sin(elapsed * d.swaySpeed * 0.7 + d.swayOffset) * d.swayAmount * 0.3;
-            });
+            }
 
-            // ── Animate crown glow pulse (slower, gentler) ──
-            buildingGroups.forEach(g => {
-                g.traverse(child => {
-                    if (child.userData && child.userData.isCrown) {
-                        child.material.opacity = 0.12 + Math.sin(elapsed * 1.5) * 0.12;
-                        child.rotation.z = elapsed * 0.15;
-                    }
-                });
-            });
+            // ── Crown pulse (direct ref, no traverse) ──
+            for (let i = 0; i < crownRefs.length; i++) {
+                crownRefs[i].material.opacity = 0.12 + Math.sin(elapsed * 1.5) * 0.12;
+                crownRefs[i].rotation.z = elapsed * 0.15;
+            }
 
             controls.update();
             renderer.render(scene, camera);
