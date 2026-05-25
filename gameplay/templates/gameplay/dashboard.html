@@ -5,14 +5,31 @@
 <div style="padding: 10px 20px;">
 
     <style>
+        .dashboard-layout {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 60px); /* Adjust based on navbar height */
+        }
+        .dashboard-sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            padding-right: 10px;
+            background-color: var(--bg-surface, #ffffff);
+        }
+        .dashboard-main {
+            flex-grow: 1;
+            position: relative;
+        }
         #campus-map-wrapper {
             position: relative;
             width: 100%;
+            height: 100%;
         }
         #campus-map-container {
             width: 100%;
-            height: 90vh;
-            background: linear-gradient(180deg, #e8f4f8 0%, #dff0f7 100%);
+            height: 100%;
+            background: linear-gradient(180deg, #f7f9fa 0%, #edf2f5 100%);
             position: relative;
             overflow: hidden;
             border-radius: 16px;
@@ -20,20 +37,98 @@
         [data-theme="dark"] #campus-map-container {
             background: linear-gradient(180deg, #1a2332 0%, #141c28 100%);
         }
-        .map-header {
-            text-align: center;
-            margin-bottom: 8px;
+        .map-header-sidebar {
+            margin-bottom: 20px;
         }
-        .map-header h2 {
-            font-size: 1.3rem;
+        .org-map-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7b8fa0;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .map-header-sidebar h2 {
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-primary, #1a2b3c);
-            margin-bottom: 2px;
+            margin: 0 0 8px 0;
+            line-height: 1.2;
         }
-        .map-header p {
-            color: var(--text-secondary, #7b8fa0);
-            font-size: 0.82rem;
+        .map-header-sidebar p {
+            color: var(--text-secondary, #64748b);
+            font-size: 0.85rem;
             margin: 0;
+            line-height: 1.4;
+        }
+        .dept-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .dept-item {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .dept-item:hover {
+            background-color: var(--bg-hover, #f1f5f9);
+        }
+        .dept-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .dept-name-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dept-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .dept-name {
+            font-weight: 600;
+            color: var(--text-primary, #1a2b3c);
+            font-size: 1rem;
+        }
+        .dept-rank {
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .dept-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-primary, #1a2b3c);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .dept-stats span {
+            display: flex;
+            align-items: baseline;
+        }
+        .dept-stat-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-secondary, #94a3b8);
+            margin-left: 2px;
+            text-transform: uppercase;
+        }
+        .dept-top-user {
+            font-size: 0.8rem;
+            color: var(--text-secondary, #64748b);
         }
         .map-live-badge {
             display: inline-flex;
@@ -89,25 +184,247 @@
             border-color: #a0b8ca;
             color: #1a2b3c;
         }
+
+        /* Bottom overlay styles */
+        .dept-bottom-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
+            padding: 16px 24px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            z-index: 20;
+            animation: slideUp 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+        [data-theme="dark"] .dept-bottom-overlay {
+            background: #1a2332;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .dept-overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .dept-overlay-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: var(--text-primary, #1a2b3c);
+            font-weight: 700;
+        }
+        .close-overlay {
+            background: #f1f5f9;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .close-overlay:hover {
+            background: #e2e8f0;
+            color: #1a2b3c;
+        }
+        .dept-overlay-stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 12px;
+        }
+        .dept-overlay-stats .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .dept-overlay-stats .stat strong {
+            font-size: 1.4rem;
+            color: var(--text-primary, #1a2b3c);
+            line-height: 1;
+        }
+        .dept-overlay-stats .stat span {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .dept-overlay-employees {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            /* hide scrollbar */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .dept-overlay-employees::-webkit-scrollbar {
+            display: none;
+        }
+        .emp-card {
+            min-width: 120px;
+            max-width: 120px;
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        [data-theme="dark"] .emp-card {
+            background: #1e2a3a;
+            border-color: #2a3a4e;
+        }
+        .emp-avatar {
+            width: 32px;
+            height: 32px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+        .emp-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .emp-name {
+            font-weight: 600;
+            color: var(--text-primary, #1a2b3c);
+            font-size: 0.9rem;
+        }
+        .emp-role {
+            color: var(--text-secondary, #94a3b8);
+            font-size: 0.75rem;
+        }
+        .emp-score {
+            margin-top: 6px;
+            color: #d97706; /* bronze-ish */
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-bottom: 2px solid #d97706;
+            padding-bottom: 2px;
+            display: inline-block;
+            align-self: flex-start;
+        }
+        [data-theme="dark"] .emp-score {
+            color: #fbbf24;
+            border-color: #fbbf24;
+        }
     </style>
 
-    <div class="map-header">
-        <h2>Campus Map</h2>
-        <p>Explore the 3D campus. The taller the building, the more points the department has.</p>
-    </div>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <div class="dashboard-sidebar">
+            <div class="map-header-sidebar">
+                <div class="org-map-label">Organisation Map</div>
+                <h2>Company<br>Floor Plan</h2>
+                <p>Departments as a living 3D office. Click a building to explore the team.</p>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid var(--border-color, #e2e8f0); margin: 20px 0;">
 
-    <div id="campus-map-wrapper">
-        <span class="map-live-badge" style="position: absolute; top: 16px; left: 16px; z-index: 10; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">{{ departments|length }} Department{{ departments|length|pluralize }} Live</span>
-        <div id="campus-map-container">
-            <!-- Three.js Canvas will be appended here -->
+            <div class="dept-list">
+                {% for dept in departments %}
+                <div class="dept-item" onclick="window.location.href='/department/{{ dept.id }}/'">
+                    <div class="dept-item-header">
+                        <div class="dept-name-wrapper">
+                            <div class="dept-dot" style="background-color: {{ dept.color|default:'#06b6d4' }};"></div>
+                            <div class="dept-name">{{ dept.name }}</div>
+                        </div>
+                        <div class="dept-rank">#{{ forloop.counter }}</div>
+                    </div>
+                    <div class="dept-stats">
+                        <span>{{ dept.total_points_display|default:"0" }}<span class="dept-stat-label">Points</span></span>
+                        <span>{{ dept.members_count|default:"0" }}<span class="dept-stat-label">Members</span></span>
+                        <span>{{ dept.ideas_count|default:"0" }}<span class="dept-stat-label">Ideas</span></span>
+                    </div>
+                    <div class="dept-top-user">
+                        Top — {{ dept.top_user_name|default:"None" }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        <div class="map-controls">
-            <button id="zoom-in-btn" title="Zoom In">+</button>
-            <button id="zoom-out-btn" title="Zoom Out">−</button>
-            <button id="reset-view-btn" title="Reset View">↻</button>
+
+        <!-- Map Section -->
+        <div class="dashboard-main">
+            <div id="campus-map-wrapper">
+                <span class="map-live-badge" style="position: absolute; top: 16px; left: 16px; z-index: 10; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">{{ departments|length }} Department{{ departments|length|pluralize }} Live</span>
+                <div id="campus-map-container">
+                    <!-- Three.js Canvas will be appended here -->
+                </div>
+                <div class="map-controls">
+                    <button id="zoom-in-btn" title="Zoom In">+</button>
+                    <button id="zoom-out-btn" title="Zoom Out">−</button>
+                    <button id="reset-view-btn" title="Reset View">↻</button>
+                </div>
+
+                <!-- Overlays -->
+                {% for dept in departments %}
+                <div id="dept-popup-{{ dept.id }}" class="dept-bottom-overlay" style="display: none;">
+                    <div class="dept-overlay-header">
+                        <h3>{{ dept.name }}</h3>
+                        <button class="close-overlay" onclick="closePopup('{{ dept.id }}')">×</button>
+                    </div>
+                    <div class="dept-overlay-stats">
+                        <div class="stat"><strong>{{ dept.total_points_display|default:"0" }}</strong><span>TOTAL POINTS</span></div>
+                        <div class="stat"><strong>{{ dept.members_count|default:"0" }}</strong><span>MEMBERS</span></div>
+                        <div class="stat"><strong>{{ dept.ideas_count|default:"0" }}</strong><span>IDEAS</span></div>
+                        <div class="stat"><strong>#{{ dept.rank }}</strong><span>RANK</span></div>
+                    </div>
+                    <div class="dept-overlay-employees">
+                        {% for profile in dept.profiles %}
+                        <div class="emp-card">
+                            <div class="emp-avatar">{{ profile.user.username|make_list|first|upper }}</div>
+                            <div class="emp-info">
+                                <div class="emp-name">{{ profile.user.username }}</div>
+                                <div class="emp-role">Employee</div>
+                                <div class="emp-score"><strong style="color: #1a2b3c;">{{ profile.total_score }}</strong> BRONZE</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    function showPopup(deptId) {
+        document.querySelectorAll('.dept-bottom-overlay').forEach(el => el.style.display = 'none');
+        const popup = document.getElementById('dept-popup-' + deptId);
+        if (popup) {
+            popup.style.display = 'block';
+        }
+    }
+    
+    function closePopup(deptId) {
+        const popup = document.getElementById('dept-popup-' + deptId);
+        if (popup) {
+            popup.style.display = 'none';
+        }
+    }
+</script>
 
 <!-- Include Three.js via CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -152,6 +469,7 @@
             camera.position.add(dir.multiplyScalar(15));
         });
         document.getElementById('reset-view-btn').addEventListener('click', function() {
+            targetFocus = null; // stop any ongoing pan
             camera.position.set(70, 90, 130);
             controls.target.set(50, 0, 50);
             controls.update();
@@ -237,6 +555,7 @@
         const buildingGroups = [];  // all department groups for raycasting
         let pointerDownPos = null;
         let pointerDownTime = 0;
+        let targetFocus = null; // for camera panning
 
         // Helper: find the department ID from any hit mesh by walking up to its group
         function getDeptIdFromHit(object) {
@@ -253,68 +572,65 @@
         // Create flat layered buildings for each department
         departments.forEach(dept => {
             const buildingHeight = dept.height / 3;
-            const layers = Math.max(2, Math.round(buildingHeight / 4));
-            const layerHeight = buildingHeight / layers;
-            const baseWidth = 14;
-            const baseDepth = 14;
+            const layers = Math.max(3, Math.round(buildingHeight / 6));
+            const plateSpacing = 4;
+            const plateThickness = 0.5;
+            
+            const baseWidth = 22;
+            const baseDepth = 22;
             const deptColor = new THREE.Color(dept.color);
 
             const group = new THREE.Group();
             group.userData = { deptId: dept.id, deptName: dept.name };
 
             for (let i = 0; i < layers; i++) {
-                const shrink = 1 - (i * 0.04);
+                const isTop = i === layers - 1;
+                const shrink = 1; // You could shrink top plates: 1 - (i * 0.02)
                 const w = baseWidth * shrink;
                 const d = baseDepth * shrink;
-                const h = layerHeight;
 
-                const geo = new THREE.BoxGeometry(w, h, d);
+                const geo = new THREE.BoxGeometry(w, plateThickness, d);
 
-                // Gradient: darker at bottom, lighter at top
-                const t = i / (layers - 1 || 1);
-                const layerColor = deptColor.clone();
-                layerColor.lerp(new THREE.Color(0xffffff), t * 0.35);
-
-                const mat = new THREE.MeshPhongMaterial({
-                    color: layerColor,
-                    shininess: 30,
-                    transparent: true,
-                    opacity: 0.92,
-                    emissive: dept.is_top ? deptColor : new THREE.Color(0x000000),
-                    emissiveIntensity: dept.is_top ? 0.15 : 0
-                });
-
-                const box = new THREE.Mesh(geo, mat);
-                box.position.y = (i * layerHeight) + (layerHeight / 2) + 0.5;
-                box.castShadow = true;
-                box.receiveShadow = true;
-                group.add(box);
-
-                // Thin separator line between layers
-                if (i > 0) {
-                    const lineGeo = new THREE.BoxGeometry(w + 0.5, 0.3, d + 0.5);
-                    const lineMat = new THREE.MeshBasicMaterial({
-                        color: 0xffffff,
+                let mat;
+                if (isTop) {
+                    mat = new THREE.MeshPhongMaterial({
+                        color: deptColor,
+                        shininess: 90,
                         transparent: true,
-                        opacity: 0.5
+                        opacity: 0.8,
+                        emissive: deptColor,
+                        emissiveIntensity: 0.5
                     });
-                    const line = new THREE.Mesh(lineGeo, lineMat);
-                    line.position.y = i * layerHeight + 0.5;
+                } else {
+                    mat = new THREE.MeshPhongMaterial({
+                        color: 0xffffff,
+                        shininess: 40,
+                        transparent: true,
+                        opacity: 0.4
+                    });
+                }
+
+                const plate = new THREE.Mesh(geo, mat);
+                plate.position.y = (i * plateSpacing) + (plateThickness / 2) + 0.5;
+                plate.castShadow = true;
+                plate.receiveShadow = true;
+                group.add(plate);
+
+                // Edge lines for the plates to make them distinct like in the image
+                if (!isTop) {
+                    const edges = new THREE.EdgesGeometry(geo);
+                    const edgeMat = new THREE.LineBasicMaterial({
+                        color: deptColor,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+                    const line = new THREE.LineSegments(edges, edgeMat);
+                    line.position.copy(plate.position);
                     group.add(line);
                 }
             }
 
-            // Accent stripe on top
-            const topY = layers * layerHeight + 0.5;
-            const accentGeo = new THREE.BoxGeometry(baseWidth * 0.7, 0.6, baseDepth * 0.7);
-            const accentMat = new THREE.MeshPhongMaterial({
-                color: deptColor,
-                shininess: 60
-            });
-            const accent = new THREE.Mesh(accentGeo, accentMat);
-            accent.position.y = topY + 0.3;
-            accent.castShadow = true;
-            group.add(accent);
+            const topY = (layers - 1) * plateSpacing + plateThickness + 0.5;
 
             group.position.set(dept.x, 0, dept.z);
             scene.add(group);
@@ -326,45 +642,29 @@
             canvas.height = 140;
             const ctx = canvas.getContext('2d');
 
-            // Draw rounded label background with subtle shadow
-            ctx.shadowColor = 'rgba(0,0,0,0.12)';
-            ctx.shadowBlur = 12;
-            ctx.shadowOffsetY = 4;
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
-            ctx.beginPath();
-            ctx.roundRect(30, 10, 452, 120, 16);
-            ctx.fill();
-
-            // Left accent bar
-            ctx.shadowColor = 'transparent';
-            ctx.fillStyle = dept.color;
-            ctx.beginPath();
-            ctx.roundRect(30, 10, 8, 120, [16, 0, 0, 16]);
-            ctx.fill();
-
             // Department name
             ctx.fillStyle = '#1a2b3c';
-            ctx.font = 'bold 38px Inter, sans-serif';
+            ctx.font = 'bold 36px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(dept.name, 256, 52);
+            ctx.fillText(dept.name, 256, 50);
 
             // Points
             ctx.fillStyle = '#7b8fa0';
-            ctx.font = '600 30px Inter, sans-serif';
-            ctx.fillText(dept.points + ' pts', 256, 100);
+            ctx.font = '600 28px Inter, sans-serif';
+            ctx.fillText(dept.points + ' pts', 256, 96);
 
             const texture = new THREE.CanvasTexture(canvas);
-            const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+            const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.position.set(dept.x, topY + 10, dept.z);
-            sprite.scale.set(26, 7, 1);
+            sprite.position.set(dept.x, topY + 8, dept.z);
+            sprite.scale.set(20, 5.5, 1);
             scene.add(sprite);
         });
 
         // ── Click on buildings — using pointerdown/pointerup to not conflict with OrbitControls ──
         renderer.domElement.addEventListener('pointerdown', function(e) {
+            targetFocus = null; // stop any ongoing pan if user drags
             pointerDownPos = { x: e.clientX, y: e.clientY };
             pointerDownTime = Date.now();
         }, true);
@@ -391,7 +691,15 @@
             if (intersects.length > 0) {
                 const deptId = getDeptIdFromHit(intersects[0].object);
                 if (deptId) {
-                    window.location.href = '/department/' + deptId + '/';
+                    showPopup(deptId);
+                    
+                    let current = intersects[0].object;
+                    while (current && !(current.userData && current.userData.deptId)) {
+                        current = current.parent;
+                    }
+                    if (current) {
+                        targetFocus = current.position.clone();
+                    }
                 }
             }
         }, true);
@@ -420,6 +728,15 @@
         // Main animation spin loop
         function animate() {
             requestAnimationFrame(animate);
+            
+            if (targetFocus) {
+                controls.target.lerp(targetFocus, 0.08); // smooth pan to target
+                if (controls.target.distanceTo(targetFocus) < 0.1) {
+                    controls.target.copy(targetFocus);
+                    targetFocus = null;
+                }
+            }
+            
             controls.update();
             renderer.render(scene, camera);
         }

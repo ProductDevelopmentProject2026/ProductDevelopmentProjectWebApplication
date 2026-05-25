@@ -279,9 +279,25 @@ def dashboard(request):
             total_points=Sum('profile__total_score')
         ).order_by('-total_points')
 
+    from django.db.models import Count
+    
     dept_data = []
-    for dept in departments:
+    for i, dept in enumerate(departments):
         total = dept.total_points or 0
+        members_count = dept.profile_set.count()
+        from .models import Idea
+        ideas_count = Idea.objects.filter(submitted_by__profile__department=dept).count()
+        
+        profiles = dept.profile_set.select_related('user').all()
+        top_profile = profiles.order_by('-total_score').first()
+        top_user_name = top_profile.user.username if top_profile else 'None'
+        
+        dept.members_count = members_count
+        dept.ideas_count = ideas_count
+        dept.top_user_name = top_user_name
+        dept.rank = i + 1
+        dept.profiles = profiles
+        
         dept_data.append({
             'dept': dept,
             'total_points': total,
@@ -298,10 +314,10 @@ def dashboard(request):
               '#8b5cf6', '#ec4899', '#14b8a6', '#eab308']
 
     positions = [
-        (15, 30), (15, 60),
-        (38, 15), (38, 45), (38, 72),
-        (62, 25), (62, 55),
-        (80, 15), (80, 45), (80, 72),
+        (-10, 10), (-10, 60), (-10, 110),
+        (35, -15), (35, 35), (35, 85),
+        (80, 10), (80, 60), (80, 110),
+        (125, -15), (125, 35), (125, 85),
     ]
 
     for i, d in enumerate(dept_data):
